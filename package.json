@@ -1,0 +1,60 @@
+{
+  "name": "kamanjamix-video-studio",
+  "productName": "KAMANJAMIX VIDEO STUDIO",
+  "version": "2.0.0",
+  "description": "KAMANJAMIX VIDEO STUDIO - standalone Windows desktop edition",
+  "author": "KAMANJAMIX",
+  "license": "UNLICENSED",
+  "private": true,
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win nsis --x64 --publish never"
+  },
+  "devDependencies": {
+    "electron": "^39.8.10",
+    "electron-builder": "^26.0.0"
+  },
+  "build": {
+    "appId": "com.kamanjamix.videostudio",
+    "productName": "KAMANJAMIX VIDEO STUDIO",
+    "copyright": "KAMANJAMIX",
+    "asar": true,
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "package.json",
+      "build/icon.ico",
+      "app/**/*"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.ico",
+      "executableName": "KAMANJAMIX VIDEO STUDIO",
+      "artifactName": "KAMANJAMIX VIDEO STUDIO SETUP.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "KAMANJAMIX VIDEO STUDIO",
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico",
+      "installerHeaderIcon": "build/icon.ico",
+      "deleteAppDataOnUninstall": false
+    }
+  }
+}

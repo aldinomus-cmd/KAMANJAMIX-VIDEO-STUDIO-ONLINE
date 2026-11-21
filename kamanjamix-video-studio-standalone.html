@@ -1,0 +1,888 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>KAMANJAMIX VIDEO STUDIO</title>
+<style>
+:root{--bg:#f3f0f8;--pn:#fff;--tx:#1a1426;--mu:#665e7c;--ln:#d9d3e6;--ac:#c4137f;--ac2:#0b8fb0;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light dark}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0a0712;--pn:#15101f;--tx:#f1edf9;--mu:#a095ba;--ln:#2a2140;--ac:#ff3fb4;--ac2:#35d4ff}}
+:root[data-theme="dark"]{--bg:#0a0712;--pn:#15101f;--tx:#f1edf9;--mu:#a095ba;--ln:#2a2140;--ac:#ff3fb4;--ac2:#35d4ff}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.6 system-ui,"Segoe UI",Tahoma,Arial,sans-serif}
+main{max-width:1180px;margin:0 auto;padding:16px}
+h1{margin:0;font:800 clamp(20px,4.5vw,30px)/1.1 system-ui,Arial,sans-serif;letter-spacing:.14em;direction:ltr;text-align:right}
+h1 b{background:linear-gradient(90deg,var(--ac),var(--ac2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{margin:4px 0 14px;color:var(--mu);font-size:13px}
+.stage{position:relative;background:#05030a;border-radius:14px;overflow:hidden;border:1px solid var(--ln)}
+canvas{display:block;width:100%;height:auto;aspect-ratio:16/9}
+.hint{position:absolute;inset:auto 0 18% 0;text-align:center;color:#fff;font-size:clamp(13px,2.6vw,18px);text-shadow:0 2px 12px #000;pointer-events:none;transition:opacity .4s}
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:12px 0;padding:10px 12px;background:var(--pn);border:1px solid var(--ln);border-radius:12px}
+.bar .seek{flex:1 1 220px;display:flex;gap:8px;align-items:center;direction:ltr}
+.bar .seek span{font-variant-numeric:tabular-nums;font-size:12px;color:var(--mu);min-width:38px}
+.meters{display:flex;gap:4px;align-items:flex-end;height:30px;direction:ltr}
+.meters i{display:block;width:8px;height:3px;background:linear-gradient(var(--ac2),var(--ac));border-radius:2px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.card{background:var(--pn);border:1px solid var(--ln);border-radius:12px;padding:12px 14px}
+.card h2{margin:0 0 8px;font-size:15px}
+.row{display:flex;align-items:center;gap:10px;margin:8px 0;font-size:13px;color:var(--mu)}
+.row label{flex:0 0 78px}
+.row input[type=range]{flex:1;accent-color:var(--ac);min-width:0}
+.chk{display:flex;align-items:center;gap:8px;margin:8px 0;font-size:13px}
+.chk input{accent-color:var(--ac)}
+button,.btn{font:inherit;font-size:13px;padding:8px 14px;border-radius:9px;border:1px solid var(--ln);background:var(--pn);color:var(--tx);cursor:pointer;display:inline-block}
+button:hover,.btn:hover{border-color:var(--ac)}
+button.on{background:var(--ac);border-color:var(--ac);color:#fff}
+button.main{background:var(--ac);border-color:var(--ac);color:#fff;font-weight:700}
+button:focus-visible,.btn:focus-within,input:focus-visible{outline:2px solid var(--ac2);outline-offset:2px}
+.btns{display:flex;flex-wrap:wrap;gap:6px}
+.sw{display:inline-block;width:10px;height:10px;border-radius:50%;margin-inline-end:6px}
+input[type=text]{width:100%;font:inherit;padding:8px 10px;border-radius:9px;border:1px solid var(--ln);background:var(--bg);color:var(--tx)}
+input[type=file]{display:none}
+video{width:100%;border-radius:10px;margin-top:8px;display:none}
+select{font:inherit;font-size:13px;padding:7px 10px;border-radius:9px;border:1px solid var(--ln);background:var(--bg);color:var(--tx)}
+#cal,#hv{aspect-ratio:auto;height:auto;max-width:100%;border-radius:8px;background:#222;display:block;margin-top:8px}
+#cal{width:auto;cursor:crosshair}
+#hv{width:260px}
+.hm{display:flex;flex-wrap:wrap;gap:16px}.hm>div{flex:1 1 250px;min-width:0}.hm .row label{flex-basis:112px}
+small{color:var(--mu);display:block;margin-top:6px}
+</style>
+</head>
+<body>
+<main>
+<h1><b>KAMANJAMIX</b> VIDEO STUDIO</h1>
+<p class="sub">النسخة الأولى: ارفع صورة المغنية وملف MP3، ثم شغّل المسرح. كل شيء يعمل داخل المتصفح فقط.</p>
+
+<div class="stage"><canvas id="stage"></canvas><div class="hint" id="hint">اضغط «العرض التجريبي» أو ارفع ملف MP3 للبدء</div></div>
+
+<div class="bar">
+  <button class="main" id="play">تشغيل</button>
+  <div class="seek"><span id="cur">0:00</span><input type="range" id="seek" min="0" max="1" step="0.01" value="0" style="flex:1;accent-color:var(--ac)"><span id="dur">0:00</span></div>
+  <div class="meters" id="meters" title="باس / متوسط / حاد"><i></i><i></i><i></i></div>
+  <label class="row" style="margin:0"><span>الصوت</span><input type="range" id="vol" min="0" max="1" step="0.01" value="0.9" style="width:90px;accent-color:var(--ac)"></label>
+</div>
+
+<div class="grid">
+  <section class="card">
+    <h2>الملفات</h2>
+    <div class="btns">
+      <label class="btn">رفع صورة المغنية<input type="file" id="img" accept="image/*"></label>
+      <label class="btn">رفع ملف MP3<input type="file" id="mp3" accept="audio/*,.mp3"></label>
+      <button id="demo">العرض التجريبي</button>
+    </div>
+    <small id="trk">لا يوجد ملف صوتي بعد.</small>
+    <div class="row" style="margin-top:12px"><label>الاسم على الشاشة</label><input type="text" id="name" placeholder="اسم المغنية" maxlength="40"></div>
+  </section>
+
+  <section class="card">
+    <h2>الصورة</h2>
+    <div class="chk"><input type="checkbox" id="key"><label for="key">إزالة الخلفية (حسب لون الحواف)</label></div>
+    <div class="row"><label>الحساسية</label><input type="range" data-k="tol" data-p="1" min="10" max="160" step="1" value="60"></div>
+    <div class="row"><label>نعومة الحواف</label><input type="range" data-k="feather" data-p="1" min="0" max="100" step="1" value="45"></div>
+    <div class="row"><label>الحجم</label><input type="range" data-k="scale" min="0.6" max="1.4" step="0.01" value="1"></div>
+    <div class="row"><label>الارتفاع</label><input type="range" data-k="yoff" min="-60" max="60" step="1" value="0"></div>
+  </section>
+
+  <section class="card">
+    <h2>الكاميرا</h2>
+    <div class="btns" id="cams"></div>
+    <div class="row" style="margin-top:12px"><label>القوة</label><input type="range" data-k="camAmt" min="0" max="1.5" step="0.05" value="1"></div>
+    <div class="chk"><input type="checkbox" id="bars" checked><label for="bars">شريط سينمائي أسود</label></div>
+  </section>
+
+  <section class="card">
+    <h2>الإضاءة</h2>
+    <div class="btns" id="themes"></div>
+    <div class="row" style="margin-top:12px"><label>الشدة</label><input type="range" data-k="light" min="0.2" max="2" step="0.05" value="1"></div>
+    <div class="chk"><input type="checkbox" id="strobe" checked><label for="strobe">وميض مع الإيقاع</label></div>
+    <div class="chk"><input type="checkbox" id="haze" checked><label for="haze">ضباب المسرح</label></div>
+  </section>
+
+  <section class="card">
+    <h2>تسجيل المقطع</h2>
+    <button id="rec">بدء التسجيل</button>
+    <small id="recs">يسجّل المسرح والصوت معاً بصيغة WebM.</small>
+    <video id="pv" controls playsinline></video>
+    <a id="dl" class="btn" style="display:none;margin-top:8px" download="kamanjamix-clip.webm">تحميل المقطع</a>
+  </section>
+
+  <section class="card">
+    <h2>حركة المغنية</h2>
+    <div class="chk"><input type="checkbox" id="perf" checked><label for="perf">وضع الأداء الغنائي</label></div>
+    <div class="chk"><input type="checkbox" id="mouthOn" checked><label for="mouthOn">فتح الفم التقريبي (ليس مزامنة شفاه)</label></div>
+    <div class="row"><label>السرعة</label><input type="range" data-k="mspeed" min="0.3" max="2" step="0.05" value="1"></div>
+    <div class="row"><label>القوة</label><input type="range" data-k="mamp" min="0" max="2" step="0.05" value="1"></div>
+    <div class="row"><label>حركة الرأس</label><input type="range" data-k="head" min="0" max="2" step="0.05" value="1"></div>
+    <div class="row"><label>فتح الفم</label><input type="range" data-k="mouthAmp" min="0" max="2" step="0.05" value="1"></div>
+    <div class="row"><label>عرض الفم</label><input type="range" data-k="mouthW" min="0.015" max="0.08" step="0.001" value="0.03"></div>
+    <div class="row"><label>العمق 2.5D</label><input type="range" data-k="depth" min="0" max="2" step="0.05" value="1"></div>
+    <div class="btns"><button class="on" data-cal="mouth">حدّد الفم</button><button data-cal="neck">حدّد الرقبة</button></div>
+    <canvas id="cal" title="اضغط على الصورة لوضع النقطة"></canvas>
+    <small>للحصول على حركة نظيفة، اضغط على فم المغنية ثم على رقبتها. الرأس يتحرك كقطعة صلبة حول الرقبة فلا تتشوه الملامح. العمق مقدَّر بنموذج هندسي بسيط، وليس خريطة عمق حقيقية. الحركة الحقيقية للوجه ومزامنة الشفاه تحتاجان نموذج ذكاء اصطناعي محلياً وهو غير متوفر هنا.</small>
+  </section>
+
+  <section class="card" style="grid-column:1/-1">
+    <h2>PREMIUM PARTICLES &amp; AUDIO VISUALIZER</h2>
+    <div class="hm">
+      <div>
+        <b>Particles — الجزيئات</b>
+        <div class="chk"><input type="checkbox" id="pOn" checked><label for="pOn">Enable Particles</label></div>
+        <div class="row"><label>Preset</label><select id="ppre"><option value="">مخصص</option><option value="royal">Royal Gold</option><option value="snow">White Sparkle</option><option value="ember">Warm Embers</option><option value="dust">Silver Dust</option></select></div>
+        <div class="row"><label>Color</label><select id="pPal"><option value="gold">Gold</option><option value="white">White</option><option value="silver">Silver</option><option value="warm">Warm Glow</option></select></div>
+        <div class="row"><label>Particle Density</label><input type="range" data-k="pdens" min="0" max="300" step="5" value="130"></div>
+        <div class="row"><label>Particle Size</label><input type="range" data-k="psize" min="0.3" max="3" step="0.05" value="1.1"></div>
+        <div class="row"><label>Particle Speed</label><input type="range" data-k="pspd" min="0.2" max="3" step="0.05" value="0.8"></div>
+        <div class="row"><label>Opacity</label><input type="range" data-k="pop" min="0" max="1" step="0.05" value="0.85"></div>
+        <div class="row"><label>Beat Reactivity</label><input type="range" data-k="preact" min="0" max="2" step="0.05" value="1"></div>
+      </div>
+      <div>
+        <b>Audio Waves — الموجات الصوتية</b>
+        <div class="chk"><input type="checkbox" id="vzOn" checked><label for="vzOn">Enable Audio Waves</label></div>
+        <div class="row"><label>Waveform Style</label><select id="vzStyle"><option value="wave">Smooth Audio Waves</option><option value="circ">Circular Waveform</option><option value="horiz">Horizontal Waveform</option><option value="bars">Spectrum Bars</option></select></div>
+        <div class="row"><label>Color</label><select id="vzCol"><option value="goldwhite">Gold + White</option><option value="gold">Gold</option><option value="white">White</option></select></div>
+        <div class="row"><label>Size</label><input type="range" data-k="vzSize" min="0.4" max="1.8" step="0.05" value="1"></div>
+        <div class="row"><label>Height</label><input type="range" data-k="vzH" min="0.2" max="2.5" step="0.05" value="1"></div>
+        <div class="row"><label>Thickness</label><input type="range" data-k="vzTh" min="1" max="10" step="0.5" value="3"></div>
+        <div class="row"><label>Opacity</label><input type="range" data-k="vzOp" min="0.1" max="1" step="0.05" value="0.85"></div>
+        <div class="row"><label>Position X</label><input type="range" data-k="vzX" min="-500" max="500" step="5" value="0"></div>
+        <div class="row"><label>Position Y</label><input type="range" data-k="vzY" min="-250" max="250" step="5" value="0"></div>
+        <div class="row"><label>Animation Speed</label><input type="range" data-k="aspd" min="0.2" max="3" step="0.05" value="1"></div>
+        <div class="chk"><input type="checkbox" id="vzOrn" checked><label for="vzOrn">زخرفة مغربية (نجمة ثمانية) مع الشكل الدائري</label></div>
+      </div>
+      <div>
+        <b>Display &amp; Export — العرض والتصدير</b>
+        <div class="chk"><input type="checkbox" id="full" checked><label for="full">Full Image Display (Contain): صورة كاملة بدون قص</label></div>
+        <div class="chk"><input type="checkbox" id="vzOver" checked><label for="vzOver">الموجات فوق الصورة في وضع الصورة الكاملة</label></div>
+        <div class="row"><label>Background Blur</label><input type="range" data-k="bgBlur" min="0" max="100" step="1" value="55"></div>
+        <div class="btns"><button id="vzprev">Preview</button><button id="vzexp" class="main">Export Video</button></div>
+        <small id="vzst">Preview يشغّل إيقاعاً تجريبياً إن لم تكن هناك أغنية. Export Video يسجّل الأغنية من بدايتها حتى نهايتها بالوقت الحقيقي (أو 20 ثانية من العرض التجريبي)، والمؤثرات تُرسم على نفس القماش المُسجَّل، فتظهر في الفيديو النهائي. في وضع الصورة الكاملة تُقيّد الكاميرا لمنع القص، وتُعطَّل إزالة الخلفية ونعومة الحواف لتبقى الصورة الأصلية كما هي. الجزيئات لا تغطي المغنية.</small>
+      </div>
+    </div>
+  </section>
+
+  <section class="card" style="grid-column:1/-1">
+    <h2>AI Singer Head &amp; Mouth Motion</h2>
+    <div class="chk"><input type="checkbox" id="hon" checked><label for="hon">Enable Motion: تفعيل حركة الرأس والفم</label></div>
+    <div class="hm">
+      <div>
+        <div id="hmSlot"></div>
+        <div class="row"><label>Zoom</label><input type="range" id="calz" min="1" max="5" step="0.1" value="1"></div>
+        <div class="btns"><button id="hreset">Reset Points</button><button id="hauto">كشف تلقائي (إن توفر)</button></div>
+        <small id="hmst"></small>
+      </div>
+      <div>
+        <div class="btns"><button id="hvbtn">Preview</button></div>
+        <canvas id="hv" width="260" height="260" style="display:none"></canvas>
+        <div class="row"><label>Head Rotation °</label><input type="range" data-k="hrot" min="0" max="8" step="0.1" value="2.5"></div>
+        <div class="row"><label>Mouth Motion</label><input type="range" data-k="mmot" min="0" max="2" step="0.05" value="1"></div>
+        <div class="row"><label>Motion Speed</label><input type="range" data-k="hspd" min="0.3" max="2" step="0.05" value="1"></div>
+        <div class="row"><label>Motion Intensity</label><input type="range" data-k="hint" min="0" max="2" step="0.05" value="1"></div>
+        <small>الرأس يدور كقطعة صلبة حول الرقبة (تحويل 2D)، والفم محاكاة هندسية: تمديد موضعي صغير وتجويف داخلي يتبع صوت الأغنية، وليس مزامنة شفاه حقيقية. لا تُولَّد شخصية جديدة: الصورة المرفوعة هي المرجع الوحيد. المعاينة تحاكي موجة غناء تجريبية إن لم يكن هناك صوت. لربط نموذج ذكاء اصطناعي محلي لاحقاً، عرّف window.KMX_FACE_PROVIDER.detect(canvas) ليعيد {mouth:{x,y}, neck:{x,y}} بإحداثيات من 0 إلى 1.</small>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>كاميرا متقدمة</h2>
+    <div class="row"><label>السرعة</label><input type="range" data-k="camSpeed" min="0.3" max="2" step="0.05" value="1"></div>
+    <div class="row"><label>الانتقال</label><select id="trans"><option value="auto">مزيج تلقائي</option><option value="ease">انسيابي</option><option value="whip">سريع (Whip)</option><option value="cut">قطع مباشر</option></select></div>
+    <div class="chk"><input type="checkbox" id="dof" checked><label for="dof">عمق الميدان (تمويه الخلفية في اللقطات القريبة)</label></div>
+  </section>
+
+  <section class="card">
+    <h2>الجمهور والمؤثرات</h2>
+    <div class="row"><label>حماس الجمهور</label><input type="range" data-k="crowd" min="0" max="2" step="0.05" value="1"></div>
+    <div class="row"><label>المؤثرات</label><input type="range" data-k="fx" min="0" max="2" step="0.05" value="1"></div>
+    <div class="row"><label>جودة الإخراج</label><select id="q"><option value="1">720p</option><option value="1.5">1080p</option></select></div>
+  </section>
+</div>
+</main>
+
+<script>
+const $=s=>document.querySelector(s),W=1280,H=720,cv=$('#stage'),ctx=cv.getContext('2d');
+cv.width=W;cv.height=H;
+const S={theme:0,cam:'auto',camAmt:1,light:1,strobe:true,haze:true,bars:true,key:false,tol:60,feather:45,scale:1,yoff:0,name:'',img:null,cv:null,mode:'none',bass:0,mid:0,treb:0,avg:0,beat:0,lastBeat:0,beats:0};
+const THEMES=[{n:'نيون',a:[255,45,170],b:[40,220,255]},{n:'ذهبي',a:[255,190,60],b:[255,110,40]},{n:'جليدي',a:[110,185,255],b:[190,150,255]},{n:'ناري',a:[255,60,40],b:[255,170,30]}];
+const col=(c,a)=>`rgba(${c[0]},${c[1]},${c[2]},${a})`;
+
+/* ---------- Audio ---------- */
+let AC,master,an,recDest,fd,noise,buf=null,srcNode=null,off=0,startAt=0,playing=false,demoOn=false,demoTimer,nextT=0,step=0,seeking=false;
+function initAudio(){
+  if(AC)return;
+  AC=new (window.AudioContext||window.webkitAudioContext)();
+  master=AC.createGain();master.gain.value=+$('#vol').value;
+  an=AC.createAnalyser();an.fftSize=1024;an.smoothingTimeConstant=.55;
+  recDest=AC.createMediaStreamDestination();
+  master.connect(an);an.connect(AC.destination);an.connect(recDest);
+  fd=new Uint8Array(an.frequencyBinCount);
+  noise=AC.createBuffer(1,AC.sampleRate*.5,AC.sampleRate);
+  const d=noise.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+}
+const env=(g,t,pk,dur)=>{g.gain.setValueAtTime(pk,t);g.gain.exponentialRampToValueAtTime(.001,t+dur)};
+function kick(t){const o=AC.createOscillator(),g=AC.createGain();o.frequency.setValueAtTime(160,t);o.frequency.exponentialRampToValueAtTime(42,t+.14);env(g,t,1,.38);o.connect(g).connect(master);o.start(t);o.stop(t+.4)}
+function noiseHit(t,type,f,pk,dur){const s=AC.createBufferSource(),fl=AC.createBiquadFilter(),g=AC.createGain();s.buffer=noise;fl.type=type;fl.frequency.value=f;env(g,t,pk,dur);s.connect(fl).connect(g).connect(master);s.start(t);s.stop(t+dur)}
+function bass(t,f){const o=AC.createOscillator(),g=AC.createGain();o.type='triangle';o.frequency.value=f;env(g,t,.5,.24);o.connect(g).connect(master);o.start(t);o.stop(t+.26)}
+function sched(){
+  const spb=60/112/4;
+  while(nextT<AC.currentTime+.12){
+    const s=step%16;
+    if(s%4===0)kick(nextT);
+    if(s%4===2)noiseHit(nextT,'highpass',7000,.18,.05);
+    if(s===4||s===12)noiseHit(nextT,'bandpass',1800,.45,.16);
+    if([0,3,6,10,14].includes(s))bass(nextT,[55,55,65.4,49][(step>>4)%4]);
+    nextT+=spb;step++;
+  }
+}
+function startDemo(){initAudio();AC.resume();pauseFile();S.mode='demo';demoOn=true;nextT=AC.currentTime+.05;step=0;clearInterval(demoTimer);demoTimer=setInterval(sched,25)}
+function stopDemo(){demoOn=false;clearInterval(demoTimer)}
+function playFile(){if(!buf)return;initAudio();AC.resume();stopDemo();srcNode=AC.createBufferSource();srcNode.buffer=buf;srcNode.connect(master);
+  srcNode.onended=()=>{if(playing&&AC.currentTime-startAt>=buf.duration-.1){playing=false;off=0}};
+  srcNode.start(0,off);startAt=AC.currentTime-off;playing=true;S.mode='file'}
+function pauseFile(){if(playing){off=AC.currentTime-startAt;srcNode.onended=null;try{srcNode.stop()}catch(e){}playing=false}}
+const curTime=()=>playing?AC.currentTime-startAt:off;
+const isPlaying=()=>S.mode==='demo'?demoOn:playing;
+function toggle(){
+  initAudio();AC.resume();
+  if(S.mode==='demo'){demoOn?stopDemo():startDemo()}
+  else if(buf){playing?pauseFile():playFile()}
+  else startDemo();
+}
+$('#play').onclick=toggle;
+$('#demo').onclick=()=>{pauseFile();demoOn?stopDemo():startDemo()};
+$('#vol').oninput=e=>{if(master)master.gain.value=+e.target.value};
+$('#seek').onpointerdown=()=>seeking=true;
+$('#seek').onchange=e=>{seeking=false;if(!buf)return;off=+e.target.value;if(playing){srcNode.onended=null;try{srcNode.stop()}catch(x){}playFile()}};
+$('#mp3').onchange=async e=>{
+  const f=e.target.files[0];if(!f)return;
+  initAudio();AC.resume();$('#trk').textContent='جارٍ فك ترميز الملف…';
+  try{
+    const ab=await f.arrayBuffer();buf=await AC.decodeAudioData(ab);
+    pauseFile();stopDemo();off=0;$('#seek').max=buf.duration;$('#trk').textContent='الملف: '+f.name;S.mode='file';playFile();
+  }catch(err){$('#trk').textContent='تعذّر قراءة الملف. جرّب ملف MP3 آخر.'}
+};
+
+function analyse(now){
+  if(!an){S.bass*=.9;S.mid*=.9;S.treb*=.9;S.beat*=.88;return}
+  an.getByteFrequencyData(fd);
+  const av=(a,b)=>{let s=0;for(let i=a;i<b;i++)s+=fd[i];return s/(b-a)/255};
+  const b=av(1,6);S.bass=b;S.mid=av(6,60);S.treb=av(60,300);
+  S.avg=S.avg*.94+b*.06;
+  if(b>S.avg*1.18+.04&&b>.45&&now-S.lastBeat>260){S.beat=1;S.lastBeat=now;S.beats++}
+  S.beat*=.88;
+}
+
+/* ---------- Singer image ---------- */
+const demoSinger=(()=>{
+  const c=document.createElement('canvas');c.width=400;c.height=900;const x=c.getContext('2d');
+  const g=x.createLinearGradient(0,0,0,900);g.addColorStop(0,'#3a2f5c');g.addColorStop(1,'#0e0a1c');x.fillStyle=g;
+  x.beginPath();x.ellipse(200,120,52,62,0,0,7);x.fill();
+  x.beginPath();x.moveTo(150,110);x.quadraticCurveTo(110,300,140,430);x.lineTo(175,200);x.fill();
+  x.beginPath();x.moveTo(250,110);x.quadraticCurveTo(290,300,260,430);x.lineTo(225,200);x.fill();
+  x.fillRect(184,175,32,40);
+  x.beginPath();x.moveTo(150,215);x.quadraticCurveTo(200,200,250,215);x.lineTo(270,420);x.lineTo(330,890);x.lineTo(70,890);x.lineTo(130,420);x.closePath();x.fill();
+  x.lineWidth=26;x.lineCap='round';x.strokeStyle='#2c2350';
+  x.beginPath();x.moveTo(250,235);x.quadraticCurveTo(310,260,262,150);x.stroke();
+  x.beginPath();x.moveTo(150,235);x.quadraticCurveTo(110,330,160,400);x.stroke();
+  x.fillStyle='#8f86b5';x.beginPath();x.arc(258,132,12,0,7);x.fill();
+  return c;
+})();
+S.cv=demoSinger;
+function process(){
+  if(!S.img){S.cv=demoSinger;uploadTex();drawCal();buildBg();return}
+  const im=S.img,sc=Math.min(1,1600/im.height),w=Math.round(im.width*sc),h=Math.round(im.height*sc);
+  const c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d',{willReadFrequently:true});
+  x.drawImage(im,0,0,w,h);
+  if(S.key&&!S.full){
+    const d=x.getImageData(0,0,w,h),p=d.data;let r=0,g=0,b=0,n=0;
+    for(const[cx,cy]of[[3,3],[w-4,3],[3,h-4],[w-4,h-4]])for(let dy=-2;dy<=2;dy++)for(let dx=-2;dx<=2;dx++){const i=((cy+dy)*w+cx+dx)*4;r+=p[i];g+=p[i+1];b+=p[i+2];n++}
+    r/=n;g/=n;b/=n;const lo=S.tol*.6,hi=S.tol;
+    for(let i=0;i<p.length;i+=4){const dd=Math.hypot(p[i]-r,p[i+1]-g,p[i+2]-b);p[i+3]=dd<=lo?0:dd>=hi?p[i+3]:p[i+3]*(dd-lo)/(hi-lo)}
+    x.putImageData(d,0,0);
+  }
+  if(S.feather>0&&!S.full){
+    const f=Math.min(.95,S.feather/100*.7);
+    x.save();x.globalCompositeOperation='destination-in';x.translate(w/2,h/2);x.scale(1,h/w);
+    const g=x.createRadialGradient(0,0,0,0,0,w/2);g.addColorStop(0,'#000');g.addColorStop(1-f,'#000');g.addColorStop(1,'rgba(0,0,0,0)');
+    x.fillStyle=g;x.fillRect(-w/2,-w/2,w,w);x.restore();
+  }
+  S.cv=c;uploadTex();drawCal();buildBg();
+}
+$('#img').onchange=e=>{
+  const f=e.target.files[0];if(!f)return;
+  const fr=new FileReader();
+  fr.onload=()=>{const im=new Image();im.onload=()=>{S.img=im;resetPts(true);process()};im.src=fr.result};
+  fr.readAsDataURL(f);
+};
+
+/* ---------- UI bindings ---------- */
+document.querySelectorAll('input[data-k]').forEach(el=>el.oninput=()=>{S[el.dataset.k]=+el.value;if(el.dataset.p)process()});
+$('#key').onchange=e=>{S.key=e.target.checked;process()};
+$('#bars').onchange=e=>S.bars=e.target.checked;
+$('#strobe').onchange=e=>S.strobe=e.target.checked;
+$('#haze').onchange=e=>S.haze=e.target.checked;
+$('#name').oninput=e=>S.name=e.target.value.trim();
+const CAMS=[['auto','تلقائي'],['wide','واسعة'],['close','قريبة'],['push','تقريب بطيء'],['orbit','دوران']];
+CAMS.forEach(([k,n])=>{const b=document.createElement('button');b.textContent=n;b.dataset.k=k;b.onclick=()=>{S.cam=k;mark('#cams',b)};$('#cams').append(b)});
+THEMES.forEach((t,i)=>{const b=document.createElement('button');b.innerHTML=`<span class="sw" style="background:linear-gradient(90deg,${col(t.a,1)},${col(t.b,1)})"></span>${t.n}`;b.onclick=()=>{S.theme=i;mark('#themes',b)};$('#themes').append(b)});
+function mark(sel,b){document.querySelectorAll(sel+' button').forEach(x=>x.classList.toggle('on',x===b))}
+mark('#cams',$('#cams button'));mark('#themes',$('#themes button'));
+addEventListener('keydown',e=>{if(e.code==='Space'&&!/INPUT|TEXTAREA|BUTTON/.test(e.target.tagName)){e.preventDefault();toggle()}});
+
+/* ---------- Recording ---------- */
+let mr,chunks=[];
+$('#rec').onclick=()=>{
+  if(mr&&mr.state==='recording'){mr.stop();return}
+  if(!window.MediaRecorder||!cv.captureStream){$('#recs').textContent='المتصفح لا يدعم التسجيل.';return}
+  initAudio();AC.resume();
+  const st=cv.captureStream(30);recDest.stream.getAudioTracks().forEach(t=>st.addTrack(t));
+  const mt=['video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm'].find(m=>MediaRecorder.isTypeSupported(m));
+  mr=new MediaRecorder(st,mt?{mimeType:mt,videoBitsPerSecond:6e6}:{});chunks=[];
+  mr.ondataavailable=e=>e.data.size&&chunks.push(e.data);
+  mr.onstop=()=>{
+    const u=URL.createObjectURL(new Blob(chunks,{type:'video/webm'}));
+    $('#pv').src=u;$('#pv').style.display='block';$('#dl').href=u;$('#dl').style.display='inline-block';
+    $('#rec').textContent='بدء التسجيل';$('#rec').classList.remove('on');$('#recs').textContent='تم التسجيل. إن لم يعمل التحميل هنا، افتح التطبيق في نافذة مستقلة.';
+  };
+  mr.start();$('#rec').textContent='إيقاف التسجيل';$('#rec').classList.add('on');$('#recs').textContent='جارٍ التسجيل…';
+};
+
+/* ---------- Camera ---------- */
+const SH={wide:{z:1,x:640,y:360,r:0},mid:{z:1.3,x:640,y:380,r:0},close:{z:1.95,x:640,y:215,r:0},orbL:{z:1.25,x:565,y:340,r:-.035},orbR:{z:1.25,x:715,y:340,r:.035},low:{z:1.5,x:640,y:470,r:.02}};
+const cam={z:1,x:640,y:360,r:0},AUTO=['wide','mid','orbL','close','orbR','low'];let ai=0,shotT=0;
+function camUpdate(t,dt){
+  let g;
+  if(S.cam==='auto'){if(t-shotT>5.5||(S.beat>.99&&S.beats%32===0&&t-shotT>2.5)){ai=(ai+1)%AUTO.length;shotT=t}g=SH[AUTO[ai]]}
+  else if(S.cam==='push'){const p=(Math.sin(t*.15)+1)/2;g={z:1+p*.9,x:640,y:360-p*150,r:0}}
+  else if(S.cam==='orbit'){const s=Math.sin(t*.4);g={z:1.25,x:640+s*110,y:340,r:s*.04}}
+  else g=SH[S.cam];
+  const a=S.camAmt,k=1-Math.exp(-dt*2.2);
+  const tz=1+(g.z-1)*a,tx=640+(g.x-640)*a,ty=360+(g.y-360)*a,tr=g.r*a;
+  cam.z+=(tz-cam.z)*k;cam.x+=(tx-cam.x)*k;cam.y+=(ty-cam.y)*k;cam.r+=(tr-cam.r)*k;
+}
+
+/* ---------- Scene ---------- */
+const haze=Array.from({length:60},()=>({x:Math.random()*1500-110,y:Math.random()*600,r:60+Math.random()*120,s:3+Math.random()*8}));
+function drawBack(t,A,B,L){
+  ctx.fillStyle='#08041a';ctx.fillRect(-400,-400,W+800,1100);
+  let g=ctx.createRadialGradient(640,300,20,640,300,560);g.addColorStop(0,col(A,.1+S.bass*.28*L));g.addColorStop(1,col(A,0));
+  ctx.fillStyle=g;ctx.fillRect(-400,-400,W+800,1100);
+  ctx.globalCompositeOperation='lighter';
+  for(let i=0;i<26;i++){
+    const v=fd?fd[2+i*3]/255:.12+.08*Math.sin(t*2+i*.5),h=50+v*270*L;
+    ctx.fillStyle=col(i%2?A:B,.2+v*.3);ctx.fillRect(100+i*43,520-h,28,h);
+  }
+  const xs=[140,390,640,890,1140],P=1+S.beat*.5;
+  xs.forEach((x,i)=>{
+    const ang=Math.sin(t*.8+i*1.7)*.45+(i-2)*.12,len=720,sp=80,ex=x+Math.sin(ang)*len,ey=40+Math.cos(ang)*len;
+    const gr=ctx.createLinearGradient(x,40,ex,ey),c=i%2?B:A,al=Math.min(.6,.12*L*(1+S.bass*2.2)*P);
+    gr.addColorStop(0,col(c,al));gr.addColorStop(1,col(c,0));
+    ctx.fillStyle=gr;ctx.beginPath();ctx.moveTo(x-6,40);ctx.lineTo(x+6,40);ctx.lineTo(ex+sp,ey);ctx.lineTo(ex-sp,ey);ctx.fill();
+  });
+  ctx.globalCompositeOperation='source-over';
+  ctx.fillStyle='#140d28';ctx.fillRect(-300,20,W+600,24);
+  xs.forEach((x,i)=>{ctx.fillStyle=col(i%2?B:A,.6+S.bass*.4);ctx.beginPath();ctx.arc(x,40,7,0,7);ctx.fill()});
+  if(S.haze){ctx.globalCompositeOperation='lighter';haze.forEach(p=>{
+    p.x+=p.s*.016;if(p.x>W+200)p.x=-200;
+    const q=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r);q.addColorStop(0,col(B,.035+S.mid*.05));q.addColorStop(1,col(B,0));
+    ctx.fillStyle=q;ctx.fillRect(p.x-p.r,p.y-p.r,p.r*2,p.r*2)});ctx.globalCompositeOperation='source-over'}
+}
+function drawFloor(A,L){
+  const g=ctx.createLinearGradient(0,560,0,900);g.addColorStop(0,'#0c0720');g.addColorStop(1,col(A,.12));
+  ctx.fillStyle=g;ctx.fillRect(-400,560,W+800,520);
+  ctx.strokeStyle=col(A,.1+S.bass*.28*L);ctx.lineWidth=1.5;
+  for(let i=-14;i<=14;i++){ctx.beginPath();ctx.moveTo(640+i*40,560);ctx.lineTo(640+i*200,900);ctx.stroke()}
+  for(let k=1;k<9;k++){const y=560+k*k*4.5;ctx.beginPath();ctx.moveTo(-400,y);ctx.lineTo(W+400,y);ctx.stroke()}
+  ctx.save();ctx.translate(640,585);ctx.scale(1,.16);
+  const r=330+S.bass*150,q=ctx.createRadialGradient(0,0,0,0,0,r);q.addColorStop(0,col(A,.55*L));q.addColorStop(1,col(A,0));
+  ctx.fillStyle=q;ctx.beginPath();ctx.arc(0,0,r,0,7);ctx.fill();ctx.restore();
+}
+function drawSinger(t,A,B,L){
+  const c=S.cv;if(!c)return;
+  const h=520*S.scale,w=h*c.width/c.height,by=585+S.yoff,bn=1+S.bass*.035+S.beat*.02,sw=Math.sin(t*1.3)*.012*(.5+S.mid*2);
+  ctx.save();ctx.globalCompositeOperation='lighter';
+  const g=ctx.createRadialGradient(640,by-h*.55,0,640,by-h*.55,h*.85);g.addColorStop(0,col(A,.12+S.bass*.35*L));g.addColorStop(1,col(A,0));
+  ctx.fillStyle=g;ctx.fillRect(640-h,by-h*1.5,h*2,h*2);ctx.restore();
+  ctx.save();ctx.translate(640,by);ctx.scale(1,-.3);ctx.globalAlpha=.2;ctx.drawImage(c,-w/2,-h,w,h);ctx.restore();
+  ctx.save();ctx.translate(640,by);ctx.rotate(sw);ctx.scale(bn,bn);
+  ctx.shadowColor=col(A,.95);ctx.shadowBlur=20+S.bass*55*L;ctx.drawImage(c,-w/2,-h,w,h);
+  ctx.shadowColor=col(B,.6);ctx.shadowBlur=10+S.treb*40*L;ctx.shadowOffsetX=8;ctx.drawImage(c,-w/2,-h,w,h);
+  ctx.restore();
+}
+function drawCrowd(t){
+  ctx.fillStyle='#04020a';
+  for(let i=0;i<24;i++){
+    const bob=Math.sin(t*3+i)*6*(.3+S.bass*2.5),r=32+(i%4)*5;
+    ctx.beginPath();ctx.arc(i*58-30+(i%2)*22,715+bob-(i%3)*10,r,0,7);ctx.fill();
+  }
+}
+function draw(t){
+  const th=THEMES[S.theme],A=th.a,B=th.b,L=S.light;
+  ctx.fillStyle='#05030a';ctx.fillRect(0,0,W,H);
+  ctx.save();ctx.translate(W/2,H/2);ctx.rotate(cam.r);ctx.scale(cam.z,cam.z);ctx.translate(-cam.x,-cam.y);
+  ctx.save();ctx.translate((cam.x-640)*.3,(cam.y-360)*.3);drawBack(t,A,B,L);ctx.restore();
+  drawFloor(A,L);drawSinger(t,A,B,L);
+  ctx.save();ctx.translate(-(cam.x-640)*.35,-(cam.y-360)*.2);drawCrowd(t);ctx.restore();
+  ctx.restore();
+  if(S.strobe&&S.beat>.6){ctx.fillStyle=col([255,255,255],(S.beat-.6)*.35*L);ctx.fillRect(0,0,W,H)}
+  const v=ctx.createRadialGradient(W/2,H/2,H*.35,W/2,H/2,H*.95);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,.6)');
+  ctx.fillStyle=v;ctx.fillRect(0,0,W,H);
+  if(S.bars){ctx.fillStyle='#000';ctx.fillRect(0,0,W,64);ctx.fillRect(0,H-64,W,64)}
+  if(S.name){
+    ctx.font='700 38px system-ui,Arial,sans-serif';ctx.textAlign='left';
+    ctx.fillStyle=col(A,1);ctx.fillRect(60,H-158,6,56);ctx.fillStyle='#fff';ctx.fillText(S.name,82,H-112);
+  }
+  ctx.font='700 16px system-ui,Arial,sans-serif';ctx.textAlign='right';ctx.fillStyle='rgba(255,255,255,.55)';ctx.fillText('KAMANJAMIX',W-40,S.bars?92:40);
+}
+
+/* ---------- Loop ---------- */
+const fmt=s=>Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0');
+const mt=[...document.querySelectorAll('#meters i')];
+let last=performance.now(),T=0;
+function frame(now){
+  const dt=Math.min(.05,(now-last)/1000);last=now;T+=dt;
+  analyse(now);camUpdate(T,dt);draw(T);
+  const p=isPlaying();
+  $('#play').textContent=p?'إيقاف مؤقت':'تشغيل';
+  $('#demo').classList.toggle('on',S.mode==='demo'&&demoOn);
+  $('#hint').style.opacity=p?0:1;
+  if(S.mode==='file'&&buf){const c=Math.min(curTime(),buf.duration);if(!seeking)$('#seek').value=c;$('#cur').textContent=fmt(c);$('#dur').textContent=fmt(buf.duration)}
+  [S.bass,S.mid,S.treb].forEach((v,i)=>mt[i].style.height=Math.max(3,Math.min(30,v*34))+'px');
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+<script>
+/* ===== v0.2: حركة مستقلة، 2.5D، كاميرا متقدمة، جمهور ومؤثرات ===== */
+Object.assign(S,{mspeed:1,mamp:1,head:1,mouthAmp:1,mouthW:.03,depth:1,perf:true,mouthOn:true,crowd:1,fx:1,camSpeed:1,trans:'auto',dof:true,q:1,env:0,voice:0,pulse:0,waveT:-9,cutF:0,whip:0,neck:{x:.5,y:.24},mouth:{x:.5,y:.14},neckT:{x:.5,y:.24},mouthT:{x:.5,y:.14},hon:true,hg:1,hrot:2.5,mmot:1,hspd:1,hint:1,prev:false,calZ:1,calC:{x:.5,y:.5},ptsSet:{mouth:false,neck:false}});
+Object.assign(cam,{hx:0,hy:0,hr:0});
+const nz=(t,a,b,c)=>Math.sin(t*a)*.5+Math.sin(t*b+1.3)*.3+Math.sin(t*c+2.1)*.2,clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+const M={sway:0,tilt:0,nod:0,breath:0,shL:0,shR:0,open:0,jaw:0};
+['perf','mouthOn','dof'].forEach(k=>$('#'+k).onchange=e=>S[k]=e.target.checked);
+$('#trans').onchange=e=>S.trans=e.target.value;
+$('#q').onchange=e=>{S.q=+e.target.value;cv.width=W*S.q;cv.height=H*S.q};
+
+/* تحليل الصوت: قنوات مستقلة (بطيئة للإضاءة، سريعة للإيقاع، وصوت المغنية للفم) */
+let aT=0,pT=0;
+function analyse(now){
+  const dt=Math.min(.05,Math.max(.001,(now-aT)/1000));aT=now;
+  S.beat*=Math.exp(-dt*7.5);S.pulse*=Math.exp(-dt*3.5);
+  if(an){
+    an.getByteFrequencyData(fd);
+    const av=(a,b)=>{let s=0;for(let i=a;i<b;i++)s+=fd[i];return s/(b-a)/255};
+    const b=av(1,6);S.bass=b;S.mid=av(6,60);S.treb=av(60,300);S.avg=S.avg*.94+b*.06;
+    if(b>S.avg*1.18+.04&&b>.45&&now-S.lastBeat>260){S.lastBeat=now;S.beats++;S.beat=1;S.pulse=1;S.waveT=T}
+  }else{S.bass*=.9;S.mid*=.9;S.treb*=.9}
+  S.env+=(S.bass-S.env)*(1-Math.exp(-dt*4));
+  const tv=(S.prev&&!isPlaying())?clamp(Math.max(0,Math.sin(now/1000*22))*(.65+.35*Math.sin(now/1000*1.3)),0,1):clamp((S.mid-.16)*3.2,0,1);S.voice+=(tv-S.voice)*(1-Math.exp(-dt*(tv>S.voice?16:7)));
+}
+
+/* حركة المغنية: ضوضاء عضوية ناعمة مستقلة عن الباس */
+function motion(t,dt){
+  const tt=t*S.mspeed,a=S.mamp,hd=S.head,pf=S.perf?1:0;
+  S.hg+=((S.hon?1:0)-S.hg)*(1-Math.exp(-dt*3));
+  const kp=1-Math.exp(-dt*7);S.neck.x+=(S.neckT.x-S.neck.x)*kp;S.neck.y+=(S.neckT.y-S.neck.y)*kp;S.mouth.x+=(S.mouthT.x-S.mouth.x)*kp;S.mouth.y+=(S.mouthT.y-S.mouth.y)*kp;
+  const ht=tt*S.hspd,gi=S.hint*S.hg*hd*a,hA=S.hrot*Math.PI/180*gi,kq=1-Math.exp(-dt*9);
+  M.sway=nz(tt,.55,.93,1.4)*.02*a;
+  M.tilt+=(nz(ht,.4,.71,1.1)*hA+pf*(S.voice-.3)*.3*hA+((S.beats%2)?1:-1)*S.pulse*.12*hA-M.tilt)*kq;
+  M.nod+=((nz(ht,.62,1.05,.37)*.005-pf*S.voice*.005+S.pulse*.003)*gi-M.nod)*kq;
+  M.breath=(Math.sin(tt*1.7)*.5+.5)*.008*a;
+  M.shL=(nz(tt,.8,1.3,.5)*.006+S.env*.004)*a;M.shR=(nz(tt+2,.8,1.3,.5)*.006+S.env*.004)*a;
+  M.open=(pf&&S.mouthOn&&S.img)?clamp(S.voice*S.mouthAmp*S.mmot*S.hint*S.hg,0,1):0;M.jaw=M.open*.008;
+}
+function headD(u,v){const asp=GW/GH,rx=(u-S.neck.x)*asp,ry=v-S.neck.y;return{x:M.sway*Math.pow(1-v,1.6)-ry*M.tilt/asp,y:rx*M.tilt+M.nod}}
+
+/* WebGL: شبكة تشويه ناعمة (الرأس صلب حول الرقبة، الأكتاف والتنفس والفك موضعية) */
+const gl_c=document.createElement('canvas'),gl=gl_c.getContext('webgl',{premultipliedAlpha:true,alpha:true});
+let glP,glT,GLok=false,GW=1,GH=1,texSrc=null;const U={},PAD=.08;
+function initGL(){
+  if(!gl)return;
+  const mk=(t,s)=>{const o=gl.createShader(t);gl.shaderSource(o,s);gl.compileShader(o);return o};
+  const vs=`attribute vec2 p;uniform vec2 neck,mouth,par;uniform float asp,sway,tilt,nod,breath,shL,shR,shV,jaw,pad;varying vec2 uv;
+void main(){vec2 d=vec2(0.);float v=p.y;
+d.x+=sway*pow(1.-v,1.6);
+float fr=max(.02,neck.y-mouth.y);float hw=1.-smoothstep(neck.y-fr*.45,neck.y+fr*.15,v);
+vec2 r=vec2((p.x-neck.x)*asp,p.y-neck.y);
+d+=hw*vec2(-r.y*tilt/asp,r.x*tilt+nod);
+float a=(v-shV)/.05;float sh=exp(-a*a);
+d.y+=sh*mix(shL,shR,smoothstep(.35,.65,p.x))-sh*breath*.5;
+d.x+=sh*(p.x-.5)*breath*1.5;
+vec2 m=vec2((p.x-mouth.x)*asp,p.y-mouth.y);
+d.y+=jaw*fr*10.*exp(-dot(m,m)/(.125*fr*fr))*smoothstep(mouth.y-fr*.04,mouth.y+fr*.12,p.y);
+vec2 e=vec2((p.x-.5)/.32,(p.y-.45)/.5);d+=par*exp(-dot(e,e));
+vec2 q=((p+d)-.5)/(1.+2.*pad)+.5;
+gl_Position=vec4(q.x*2.-1.,1.-q.y*2.,0.,1.);uv=p;}`;
+  const fs='precision mediump float;uniform sampler2D t;varying vec2 uv;void main(){gl_FragColor=texture2D(t,uv);}';
+  glP=gl.createProgram();gl.attachShader(glP,mk(gl.VERTEX_SHADER,vs));gl.attachShader(glP,mk(gl.FRAGMENT_SHADER,fs));gl.linkProgram(glP);
+  if(!gl.getProgramParameter(glP,gl.LINK_STATUS))return;
+  gl.useProgram(glP);
+  const P=[],I=[],NX=36,NY=72;
+  for(let j=0;j<=NY;j++)for(let i=0;i<=NX;i++)P.push(i/NX,j/NY);
+  for(let j=0;j<NY;j++)for(let i=0;i<NX;i++){const a=j*(NX+1)+i;I.push(a,a+1,a+NX+1,a+1,a+NX+2,a+NX+1)}
+  gl.bindBuffer(gl.ARRAY_BUFFER,gl.createBuffer());gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(P),gl.STATIC_DRAW);
+  const loc=gl.getAttribLocation(glP,'p');gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,2,gl.FLOAT,false,0,0);
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,gl.createBuffer());gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,new Uint16Array(I),gl.STATIC_DRAW);
+  ['neck','mouth','par','asp','sway','tilt','nod','breath','shL','shR','shV','jaw','pad'].forEach(n=>U[n]=gl.getUniformLocation(glP,n));
+  GLok=true;
+}
+function uploadTex(){
+  if(!GLok)return;const c=S.cv;
+  if(!glT)glT=gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D,glT);gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,true);
+  try{gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,c)}catch(e){GLok=false;return}
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+  GW=c.width;GH=c.height;gl_c.width=Math.round(GW*(1+2*PAD));gl_c.height=Math.round(GH*(1+2*PAD));gl.viewport(0,0,gl_c.width,gl_c.height);texSrc=c;
+}
+function renderWarp(px,py){
+  gl.useProgram(glP);gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT);
+  gl.uniform2f(U.neck,S.neck.x,S.neck.y);gl.uniform2f(U.mouth,S.mouth.x,S.mouth.y);gl.uniform2f(U.par,px,py);
+  gl.uniform1f(U.asp,GW/GH);gl.uniform1f(U.sway,M.sway);gl.uniform1f(U.tilt,M.tilt);gl.uniform1f(U.nod,M.nod);gl.uniform1f(U.breath,M.breath);
+  gl.uniform1f(U.shL,M.shL);gl.uniform1f(U.shR,M.shR);gl.uniform1f(U.shV,S.neck.y+.05);gl.uniform1f(U.jaw,M.jaw);gl.uniform1f(U.pad,PAD);
+  gl.drawElements(gl.TRIANGLES,36*72*6,gl.UNSIGNED_SHORT,0);
+}
+
+/* معايرة نقطتي الفم والرقبة */
+let calTool='mouth';
+const calWin=()=>{const v=1/S.calZ;return{x0:clamp(S.calC.x-v/2,0,1-v),y0:clamp(S.calC.y-v/2,0,1-v),vw:v,vh:v}};
+function drawCal(){
+  const c=$('#cal'),x=c.getContext('2d'),s=S.cv;if(!s)return;
+  const w=calWin(),ar=s.width/s.height;let H0=420,W0=Math.round(H0*ar);if(W0>520){W0=520;H0=Math.round(W0/ar)}c.width=W0;c.height=H0;x.fillStyle='#222';x.fillRect(0,0,W0,H0);x.drawImage(s,w.x0*s.width,w.y0*s.height,w.vw*s.width,w.vh*s.height,0,0,W0,H0);
+  [[S.neckT,'#35d4ff','NECK'],[S.mouthT,'#ff3fb4','MOUTH']].forEach(([p,cl,n])=>{const px=(p.x-w.x0)/w.vw*W0,py=(p.y-w.y0)/w.vh*H0;x.strokeStyle=cl;x.fillStyle=cl;x.lineWidth=2;x.beginPath();x.arc(px,py,7,0,7);x.moveTo(px-13,py);x.lineTo(px+13,py);x.moveTo(px,py-13);x.lineTo(px,py+13);x.stroke();x.font='11px system-ui,Arial';x.fillText(n,px+10,py-9)});
+}
+document.querySelectorAll('[data-cal]').forEach(b=>b.onclick=()=>{calTool=b.dataset.cal;document.querySelectorAll('[data-cal]').forEach(x=>x.classList.toggle('on',x===b))});
+$('#cal').onclick=e=>{const r=e.target.getBoundingClientRect(),w=calWin(),p={x:w.x0+(e.clientX-r.left)/r.width*w.vw,y:w.y0+(e.clientY-r.top)/r.height*w.vh};S[calTool+'T']=p;S.ptsSet[calTool]=true;if(calTool==='mouth')S.calC={x:p.x,y:p.y};setSt();drawCal()};
+
+/* كاميرا: لقطات بحركة دولي داخلية وانتقالات (انسيابي / Whip / قطع) */
+const ease=x=>x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2,mix=(a,b,p)=>({z:a.z+(b.z-a.z)*p,x:a.x+(b.x-a.x)*p,y:a.y+(b.y-a.y)*p,r:a.r+(b.r-a.r)*p});
+SH.close2={z:2.1,x:652,y:205,r:.012};
+const PLAN=[['wide','mid'],['mid','close'],['orbL','orbR'],['close','close2'],['low','mid'],['orbR','orbL'],['mid','wide']];
+const shot={i:-1,t0:-99,dur:6,tr:1,kind:'ease',f:'wide',to:'mid',prev:{z:1,x:640,y:360,r:0}};
+function nextShot(t){
+  shot.i=(shot.i+1)%PLAN.length;shot.kind=S.trans==='auto'?['ease','whip','ease','cut'][shot.i%4]:S.trans;
+  shot.f=PLAN[shot.i][0];shot.to=PLAN[shot.i][1];shot.t0=t;shot.dur=(5+Math.random()*3)/S.camSpeed;
+  shot.tr=shot.kind==='cut'?0:(shot.kind==='whip'?.45:1.4)/S.camSpeed;
+  shot.prev={z:cam.z,x:cam.x,y:cam.y,r:cam.r};if(shot.kind==='cut')S.cutF=.9;
+}
+function camUpdate(t,dt){
+  const a=S.camAmt,sp=S.camSpeed;let g,direct=false;
+  const sc=q=>({z:1+(q.z-1)*a,x:640+(q.x-640)*a,y:360+(q.y-360)*a,r:q.r*a});
+  S.whip=0;
+  if(S.cam==='auto'){
+    if(t-shot.t0>shot.dur||(S.beat>.99&&S.beats%32===0&&t-shot.t0>3))nextShot(t);
+    const el=t-shot.t0;g=sc(mix(SH[shot.f],SH[shot.to],ease(Math.min(1,el/shot.dur))));
+    const tp=shot.tr>0?Math.min(1,el/shot.tr):1;
+    if(tp<1){g=mix(shot.prev,g,ease(tp));if(shot.kind==='whip'){g.r+=Math.sin(tp*Math.PI)*.06;S.whip=Math.sin(tp*Math.PI)}}
+    direct=true;
+  }else{
+    if(S.cam==='push'){const p=(Math.sin(t*.15*sp)+1)/2;g={z:1+p*.9,x:640,y:360-p*150,r:0}}
+    else if(S.cam==='orbit'){const s=Math.sin(t*.4*sp);g={z:1.25,x:640+s*110,y:340,r:s*.04}}
+    else g=SH[S.cam];
+    g=sc(g);
+  }
+  if(direct){cam.z=g.z;cam.x=g.x;cam.y=g.y;cam.r=g.r}
+  else{const k=1-Math.exp(-dt*2.2*sp);cam.z+=(g.z-cam.z)*k;cam.x+=(g.x-cam.x)*k;cam.y+=(g.y-cam.y)*k;cam.r+=(g.r-cam.r)*k}
+  cam.hx=nz(t,.7,1.3,2.1)*2.5*a;cam.hy=nz(t,.9,1.7,2.3)*2*a;cam.hr=nz(t,.5,.9,1.6)*.003*a;
+  if(S.full){cam.z=Math.min(cam.z,1.03);cam.x=640+(cam.x-640)*.15;cam.y=360+(cam.y-360)*.15;cam.r*=.3}
+  S.cutF*=Math.exp(-dt*6);
+}
+
+/* المغنية: لا تكبير ولا اهتزاز كامل مع الباس. الحركة كلها داخل شبكة التشويه */
+function drawSinger(t,A,B,L){
+  const c=S.cv;if(!c)return;
+  const sgm=sgeom(),h=sgm.h,w=sgm.w,by=sgm.by;
+  ctx.save();ctx.globalCompositeOperation='lighter';
+  const g=ctx.createRadialGradient(640,by-h*.55,0,640,by-h*.55,h*.85);g.addColorStop(0,col(A,.12+S.env*.3*L+S.pulse*.12*L));g.addColorStop(1,col(A,0));
+  ctx.fillStyle=g;ctx.fillRect(640-h,by-h*1.5,h*2,h*2);ctx.restore();
+  let img=c,ix=-w/2,iy=-h,iw=w,ih=h;
+  if(GLok&&texSrc===c){
+    renderWarp(-(cam.x-640)/640*.025*S.depth,-(cam.y-360)/360*.012*S.depth);
+    img=gl_c;const mp=PAD*h;iw=w*(1+2*PAD);ih=h*(1+2*PAD);ix=-iw/2;iy=-h-mp;
+  }
+  ctx.imageSmoothingQuality='high';
+  ctx.save();ctx.translate(640,by);ctx.scale(1,-.3);ctx.globalAlpha=.2;ctx.drawImage(img,ix,iy,iw,ih);ctx.restore();
+  ctx.save();ctx.translate(640,by);
+  ctx.shadowColor=col(A,.9);ctx.shadowBlur=16+S.env*30*L;ctx.drawImage(img,ix,iy,iw,ih);
+  ctx.shadowColor=col(B,.5);ctx.shadowBlur=8+S.treb*30*L;ctx.shadowOffsetX=8;ctx.drawImage(img,ix,iy,iw,ih);
+  ctx.shadowColor='transparent';ctx.shadowBlur=0;ctx.shadowOffsetX=0;drawPreview();
+  if(M.open>.03&&GLok&&texSrc===c){
+    const hd=headD(S.mouth.x,S.mouth.y),mx=(S.mouth.x+hd.x-.5)*w,my=(S.mouth.y+hd.y-1)*h+M.jaw*h*.3;
+    const rx=S.mouthW*h/2*(1+.2*M.open),ry=Math.max(.5,M.open*S.mouthW*h*.28);
+    const mg=ctx.createRadialGradient(mx,my+ry*.5,0,mx,my+ry*.5,rx);mg.addColorStop(0,'#2a0509');mg.addColorStop(1,'#12020a');
+    ctx.globalAlpha=Math.min(1,M.open*1.4);ctx.fillStyle=mg;ctx.beginPath();ctx.ellipse(mx,my+ry*.5,rx,ry,0,0,7);ctx.fill();
+  }
+  ctx.restore();
+}
+
+/* الجمهور: صفّان، كل شخص بإيقاعه، وموجة أيادٍ تنتقل عند كل ضربة */
+function drawCrowd(t){
+  const E=S.crowd;
+  for(const row of[1,0]){
+    const n=row?30:22,sp=row?44:58,y0=row?690:722,rr=row?24:32;
+    ctx.fillStyle=row?'#0a0614':'#04020a';
+    for(let i=0;i<n;i++){
+      const w=t-S.waveT-i*.025,rs=w>0?Math.exp(-w*3.5):0;
+      const bob=(Math.sin(t*(1.6+(i%5)*.15)+i*1.7)*3+rs*14*E)*(.4+E*.6);
+      const x=i*sp-20+(i%2)*14,y=y0+bob-(i%3)*8;
+      ctx.beginPath();ctx.arc(x,y,rr+(i%4)*3,0,7);ctx.fill();
+      if(i%2===row&&E>0){
+        const up=(S.env*.8+rs)*E*55*(.5+((i*37)%10)/20);
+        if(up>6){ctx.strokeStyle=ctx.fillStyle;ctx.lineWidth=9;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(x,y-rr+6);ctx.lineTo(x+Math.sin(t*2+i)*14,y-rr-up);ctx.stroke()}
+      }
+    }
+  }
+}
+function drawLasers(t,A,B){
+  const v=Math.max(0,S.treb*2-.15)*S.fx;if(v<.03)return;
+  ctx.save();ctx.globalCompositeOperation='lighter';ctx.lineWidth=2;
+  for(let i=0;i<7;i++){const x=640+(i-3)*150,a=Math.sin(t*.9+i)*.5+(i-3)*.12;ctx.strokeStyle=col(i%2?A:B,Math.min(.7,v*.5));ctx.beginPath();ctx.moveTo(x,44);ctx.lineTo(x+Math.sin(a)*800,44+Math.cos(a)*800);ctx.stroke()}
+  ctx.restore();
+}
+const PT=[];
+function confetti(t,dt,A,B){
+  if(S.fx&&S.pulse>.97&&S.beats%8===0&&PT.length<260)for(let i=0;i<70;i++)PT.push({x:640+(Math.random()-.5)*900,y:-20,vx:(Math.random()-.5)*60,vy:60+Math.random()*120,r:Math.random()*6,s:Math.random()*5+3,c:Math.random()<.5?A:B,ph:Math.random()*6});
+  for(let i=PT.length-1;i>=0;i--){
+    const p=PT[i];p.x+=p.vx*dt+Math.sin(t*3+p.ph)*.6;p.y+=p.vy*dt;p.vy=Math.min(p.vy+40*dt,200);p.ph+=dt;
+    if(p.y>H+20){PT.splice(i,1);continue}
+    ctx.fillStyle=col(p.c,.85);ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.r+p.ph*2);ctx.fillRect(-p.s,-p.s/2,p.s*2,p.s);ctx.restore();
+  }
+}
+
+function draw(t){
+  const k=S.q,th=THEMES[S.theme],A=th.a,B=th.b,L=S.light,dt=Math.min(.05,Math.max(.001,t-pT));pT=t;
+  ctx.setTransform(k,0,0,k,0,0);perfTick(dt);motion(t,dt);
+  ctx.fillStyle='#05030a';ctx.fillRect(0,0,W,H);
+  ctx.save();ctx.translate(W/2,H/2);ctx.rotate(cam.r+cam.hr);ctx.scale(cam.z,cam.z);ctx.translate(-cam.x-cam.hx,-cam.y-cam.hy);
+  const dof=S.dof&&('filter' in ctx)&&cam.z>1.4;
+  ctx.save();ctx.translate((cam.x-640)*.3,(cam.y-360)*.3);
+  if(dof)ctx.filter='blur('+((cam.z-1.4)*4).toFixed(1)+'px)';
+  if(S.full)drawFullBg(t,A,B,L);else{drawBack(t,A,B,L);drawLasers(t,A,B)}if(dof)ctx.filter='none';ctx.restore();
+  if(!S.full)drawFloor(A,L);
+  layersBack(t,dt);drawSinger(t,A,B,L);layersFront(t);
+  if(!S.full){ctx.save();ctx.translate(-(cam.x-640)*.35,-(cam.y-360)*.2);drawCrowd(t);ctx.restore()}
+  if(!S.full)confetti(t,dt,A,B);
+  ctx.restore();
+  if(S.strobe&&S.beat>.6){ctx.fillStyle=col([255,255,255],(S.beat-.6)*.35*L);ctx.fillRect(0,0,W,H)}
+  if(S.whip>.05){const g=ctx.createLinearGradient(0,0,W,0);g.addColorStop(0,'rgba(255,255,255,0)');g.addColorStop(.5,'rgba(255,255,255,'+S.whip*.25+')');g.addColorStop(1,'rgba(255,255,255,0)');ctx.fillStyle=g;ctx.fillRect(0,0,W,H)}
+  const v=ctx.createRadialGradient(W/2,H/2,H*.35,W/2,H/2,H*.95);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,.6)');
+  ctx.fillStyle=v;ctx.fillRect(0,0,W,H);
+  if(S.cutF>.02){ctx.fillStyle='rgba(0,0,0,'+S.cutF+')';ctx.fillRect(0,0,W,H)}
+  if(S.bars){ctx.fillStyle='#000';ctx.fillRect(0,0,W,64);ctx.fillRect(0,H-64,W,64)}
+  if(S.name){ctx.font='700 38px system-ui,Arial,sans-serif';ctx.textAlign='left';ctx.fillStyle=col(A,1);ctx.fillRect(60,H-158,6,56);ctx.fillStyle='#fff';ctx.fillText(S.name,82,H-112)}
+  ctx.font='700 16px system-ui,Arial,sans-serif';ctx.textAlign='right';ctx.fillStyle='rgba(255,255,255,.55)';ctx.fillText('KAMANJAMIX',W-40,S.bars?92:40);
+}
+initGL();uploadTex();drawCal();
+</script>
+<script>
+/* ===== v0.3: لوحة AI Singer Head & Mouth Motion ===== */
+{const oc=$('#cal');$('#hmSlot').append(oc.previousElementSibling,oc,oc.nextElementSibling);
+ const bs=$('#hmSlot').querySelectorAll('button');bs[0].textContent='Select Mouth Point';bs[1].textContent='Select Neck Pivot';
+ const h=[...document.querySelectorAll('.card h2')].find(x=>x.textContent==='حركة المغنية');if(h)h.textContent='الجسم والعمق 2.5D';}
+function setSt(){const p=S.ptsSet;$('#hmst').textContent=p.mouth&&p.neck?'تم تحديد النقطتين ✓':'اضغط على الصورة لتحديد: '+(p.mouth?'':'الفم ')+(p.neck?'':'الرقبة ')+(S.img?'':'(الصورة الحالية تجريبية)')}
+function resetPts(snap){
+  S.neckT={x:.5,y:.24};S.mouthT={x:.5,y:.14};
+  if(snap){S.neck={...S.neckT};S.mouth={...S.mouthT}}
+  S.ptsSet={mouth:false,neck:false};S.calZ=1;S.calC={x:.5,y:.5};$('#calz').value=1;setSt();drawCal();
+}
+$('#hon').onchange=e=>S.hon=e.target.checked;
+$('#hreset').onclick=()=>resetPts(false);
+$('#calz').oninput=e=>{S.calZ=+e.target.value;S.calC={x:S.mouthT.x,y:(S.mouthT.y+S.neckT.y)/2};drawCal()};
+$('#hvbtn').onclick=e=>{S.prev=!S.prev;e.target.classList.toggle('on',S.prev);$('#hv').style.display=S.prev?'block':'none'};
+$('#hauto').onclick=async()=>{
+  const s=S.cv;let r=null;
+  try{
+    if(window.KMX_FACE_PROVIDER)r=await window.KMX_FACE_PROVIDER.detect(s);
+    else if('FaceDetector' in window){
+      const f=(await new FaceDetector({fastMode:false,maxDetectedFaces:1}).detect(s))[0];
+      if(f){const m=f.landmarks&&f.landmarks.find(l=>l.type==='mouth'),b=f.boundingBox,L=m?m.locations:null;
+        const mx=L?L.reduce((a,p)=>a+p.x,0)/L.length:b.x+b.width/2,my=L?L.reduce((a,p)=>a+p.y,0)/L.length:b.y+b.height*.8;
+        r={mouth:{x:mx/s.width,y:my/s.height},neck:{x:(b.x+b.width/2)/s.width,y:(b.y+b.height*1.1)/s.height}}}
+    }else{$('#hmst').textContent='الكشف التلقائي غير متاح في هذا المتصفح. حدّد النقطتين يدوياً.';return}
+  }catch(e){}
+  if(!r){$('#hmst').textContent='لم يُعثر على وجه. حدّد النقطتين يدوياً.';return}
+  S.mouthT=r.mouth;S.neckT=r.neck;S.ptsSet={mouth:true,neck:true};S.calC={...r.mouth};setSt();drawCal();
+};
+/* معاينة مكبّرة للرأس من نفس إطار WebGL المشوَّه */
+function drawPreview(){
+  if(!S.prev||!GLok||texSrc!==S.cv)return;
+  const c=$('#hv'),x=c.getContext('2d'),r=Math.max(.04,S.neck.y-S.mouth.y),s=r*4.2*GH,k=c.width/s;
+  const sx=(S.mouth.x+PAD)*GW-s/2,sy=(S.mouth.y-r*.15+PAD)*GH-s/2;
+  x.fillStyle='#1a1426';x.fillRect(0,0,c.width,c.height);x.imageSmoothingQuality='high';
+  x.drawImage(gl_c,sx,sy,s,s,0,0,c.width,c.height);
+  if(M.open>.03){
+    const hd=headD(S.mouth.x,S.mouth.y),mx=((S.mouth.x+hd.x+PAD)*GW-sx)*k,my=((S.mouth.y+hd.y+PAD)*GH-sy)*k+M.jaw*GH*k*.3;
+    const rx=S.mouthW*GH*k/2*(1+.2*M.open),ry=Math.max(.5,M.open*S.mouthW*GH*k*.28);
+    x.globalAlpha=Math.min(1,M.open*1.4);x.fillStyle='#2a0509';x.beginPath();x.ellipse(mx,my+ry*.5,rx,ry,0,0,7);x.fill();x.globalAlpha=1;
+  }
+  x.strokeStyle='#35d4ff';x.lineWidth=2;x.beginPath();x.arc(((S.neck.x+PAD)*GW-sx)*k,((S.neck.y+PAD)*GH-sy)*k,5,0,7);x.stroke();
+}
+setSt();
+</script>
+<script>
+/* ===== v0.4: PREMIUM PARTICLES & AUDIO VISUALIZER (طبقات مستقلة تُرسم على نفس القماش فتظهر في التصدير) ===== */
+Object.assign(S,{full:true,bgBlur:55,pOn:true,pPal:'gold',pmode:'float',pdens:130,psize:1.1,pspd:.8,pop:.85,preact:1,vzOn:true,vzStyle:'wave',vzCol:'goldwhite',vzSize:1,vzH:1,vzTh:3,vzOp:.85,vzX:0,vzY:0,vzOver:true,vzOrn:true,aspd:1,perfK:1,exporting:false,expEnd:0});
+const PAL={gold:[[255,208,110],[255,236,170],[255,255,255]],white:[[255,255,255],[235,240,255]],silver:[[205,212,225],[240,244,250]],warm:[[255,170,90],[255,214,150],[255,236,200]]};
+const SPR={};
+function spr(c){const k=c.join();if(SPR[k])return SPR[k];const s=document.createElement('canvas');s.width=s.height=64;const x=s.getContext('2d'),g=x.createRadialGradient(32,32,0,32,32,32);g.addColorStop(0,'rgba(255,255,255,1)');g.addColorStop(.18,'rgba('+c+',.95)');g.addColorStop(.5,'rgba('+c+',.28)');g.addColorStop(1,'rgba('+c+',0)');x.fillStyle=g;x.fillRect(0,0,64,64);return SPR[k]=s}
+['pOn','vzOn','vzOver','vzOrn'].forEach(k=>$('#'+k).onchange=e=>S[k]=e.target.checked);
+['pPal','vzStyle','vzCol'].forEach(k=>$('#'+k).onchange=e=>S[k]=e.target.value);
+$('#full').onchange=e=>{S.full=e.target.checked;process()};
+document.querySelector('[data-k="bgBlur"]').addEventListener('input',()=>buildBg());
+const PRE={royal:{pPal:'gold',pmode:'float',pdens:130,psize:1.1,pspd:.8,pop:.85},snow:{pPal:'white',pmode:'fall',pdens:170,psize:.8,pspd:.9,pop:.8},ember:{pPal:'warm',pmode:'rise',pdens:110,psize:1.2,pspd:1.3,pop:.9},dust:{pPal:'silver',pmode:'float',pdens:90,psize:.7,pspd:.6,pop:.7}};
+$('#ppre').onchange=e=>{const p=PRE[e.target.value];if(!p)return;Object.assign(S,p);$('#pPal').value=p.pPal;['pdens','psize','pspd','pop'].forEach(k=>document.querySelector('[data-k="'+k+'"]').value=p[k])};
+$('#vzprev').onclick=()=>{initAudio();AC.resume();if(!isPlaying())startDemo();$('#vzst').textContent='جارٍ المعاينة بالصوت الحقيقي الحالي.'};
+$('#vzexp').onclick=()=>{
+  if(mr&&mr.state==='recording'){mr.stop();S.exporting=false;return}
+  initAudio();AC.resume();
+  if(buf){pauseFile();off=0;playFile();S.exporting='file'}else{startDemo();S.exporting='demo';S.expEnd=performance.now()+20000}
+  $('#rec').click();
+};
+
+/* أداء: تخفيف تلقائي لعدد الجزيئات عند بطء الإطارات، وإيقاف التصدير عند نهاية الأغنية */
+let ema=.016,pAcc=0,lastLbl='';
+function perfTick(dt){
+  ema+=(dt-ema)*.05;pAcc+=dt;
+  if(pAcc>.5){pAcc=0;if(ema>.03)S.perfK=Math.max(.35,S.perfK-.08);else if(ema<.02)S.perfK=Math.min(1,S.perfK+.04)}
+  const rec=!!(mr&&mr.state==='recording');
+  if(S.exporting&&rec&&((S.exporting==='file'&&!playing)||(S.exporting==='demo'&&performance.now()>S.expEnd))){if(S.exporting==='demo')stopDemo();mr.stop();S.exporting=false}
+  const l=rec&&S.exporting?'Stop Export':'Export Video';if(l!==lastLbl){$('#vzexp').textContent=l;lastLbl=l}
+}
+
+/* هندسة المغنية: contain كامل في وضع الصورة الكاملة (لا قص) */
+function sgeom(){
+  const c=S.cv,ar=c.width/c.height;let h=520*S.scale,by=585+S.yoff;
+  if(S.full){h=Math.min(H*.94-(S.bars?128:0),W*.94/ar)*Math.min(1,S.scale);by=H/2+h/2+S.yoff*.2}
+  return{h,w:h*ar,by};
+}
+const bgCv=document.createElement('canvas');
+function buildBg(){
+  const s=S.cv;if(!s)return;
+  const w=Math.max(24,Math.round(320*(1-S.bgBlur/100*.92))),h=Math.round(w*9/16);
+  bgCv.width=w;bgCv.height=h;const x=bgCv.getContext('2d'),k=Math.max(w/s.width,h/s.height),dw=s.width*k,dh=s.height*k;
+  x.imageSmoothingQuality='high';x.drawImage(s,(w-dw)/2,(h-dh)/2,dw,dh);
+}
+function drawFullBg(t,A,B,L){
+  ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
+  ctx.drawImage(bgCv,-160,-90,W+320,H+180);
+  ctx.fillStyle='rgba(6,3,14,.5)';ctx.fillRect(-300,-300,W+600,H+600);
+  const g=ctx.createRadialGradient(640,360,50,640,360,760);g.addColorStop(0,col(A,.1+S.env*.18*L+S.pulse*.1*L));g.addColorStop(1,col(B,0));
+  ctx.fillStyle=g;ctx.fillRect(-300,-300,W+600,H+600);
+}
+
+/* الجزيئات: طبقة خلف المغنية وطبقة أمامها تختفي تدريجياً فوق الجسم والوجه */
+const PS=[];
+function mkP(init){return{x:-120+Math.random()*1520,y:init?-80+Math.random()*900:(S.pmode==='fall'?-60:860),z:Math.random(),r:3+Math.random()*7,ph:Math.random()*6.28,ci:Math.random()}}
+function partUpdate(t,dt){
+  const n=S.pOn?Math.round(S.pdens*S.perfK):0;
+  while(PS.length<n)PS.push(mkP(true));
+  if(PS.length>n)PS.length=n;
+  const sp=S.pspd*S.aspd,boost=1+(S.pulse*1.1+S.env*.5)*S.preact,vy=S.pmode==='fall'?22:S.pmode==='rise'?-20:-6;
+  for(const p of PS){
+    const dz=.35+p.z*.9;
+    p.x+=(Math.sin(t*.35*sp+p.ph+p.y*.004)*14+8*Math.sin(p.ph))*dt*sp*dz;
+    p.y+=vy*dt*sp*dz*boost;
+    if(p.y<-100||p.y>860||p.x<-160||p.x>1440)Object.assign(p,mkP(false));
+  }
+}
+function drawParts(t,pass){
+  if(!PS.length)return;
+  const pal=PAL[S.pPal]||PAL.gold,g=pass?sgeom():null,rx=g?(S.full?g.w/2:g.w*.34):0,ry=g?g.h/2:0,cy=g?g.by-g.h/2:0;
+  ctx.save();ctx.globalCompositeOperation='lighter';
+  for(const p of PS){
+    if((p.z>=.55)!==!!pass)continue;
+    const x=p.x+(cam.x-640)*(.3-.65*p.z),y=p.y+(cam.y-360)*(.2-.4*p.z);
+    let a=S.pop*(.45+.55*(.5+.5*Math.sin(t*(1.2+p.ph*.3)*S.aspd+p.ph*7)))*(1+S.treb*1.4*S.preact)*(.35+p.z*.65);
+    if(g){const dx=(x-640)/rx,dy=(y-cy)/ry,d=S.full?Math.max(Math.abs(dx),Math.abs(dy)):Math.hypot(dx,dy),u=clamp((d-1)/.3,0,1);a*=u*u*(3-2*u)}
+    if(a<.02)continue;
+    const sz=p.r*S.psize*(.5+p.z*.9)*(1+S.pulse*.4*S.preact+S.env*.2);
+    ctx.globalAlpha=Math.min(1,a);ctx.drawImage(spr(pal[Math.floor(p.ci*pal.length)]),x-sz,y-sz,sz*2,sz*2);
+  }
+  ctx.restore();
+}
+
+/* الموجات: بيانات حقيقية من AnalyserNode (طيف + موجة زمنية) مع تنعيم هجوم/تلاشي */
+const NB=64,NW=128,vb=new Float32Array(NB),pk=new Float32Array(NB),wv=new Float32Array(NW),BE=[];let td=null;
+for(let i=0;i<=NB;i++)BE.push(2*Math.pow(210,i/NB));
+function vzUpdate(t,dt){
+  const live=!!(an&&fd),idle=!isPlaying();
+  if(live&&!td)td=new Uint8Array(an.fftSize);
+  if(live)an.getByteTimeDomainData(td);
+  const ka=1-Math.exp(-dt*22),kr=1-Math.exp(-dt*7);
+  for(let i=0;i<NB;i++){
+    let v=0;
+    if(live){const a=Math.floor(BE[i]),b=Math.max(a+1,Math.floor(BE[i+1]));let s=0;for(let j=a;j<b;j++)s+=fd[j];v=Math.pow(s/(b-a)/255,1.15)*(.85+i/NB*.9)}
+    if(idle)v=Math.max(v,.04+.035*Math.sin(t*1.4*S.aspd+i*.35));
+    vb[i]+=(v-vb[i])*(v>vb[i]?ka:kr);pk[i]=Math.max(vb[i],pk[i]-dt*.45);
+  }
+  for(let i=0;i<NW;i++){
+    let s=live?(td[i*8]-128)/128*2.2:0;
+    if(idle)s+=Math.sin(i*.22+t*2*S.aspd)*.12*Math.sin(Math.PI*i/NW);
+    wv[i]+=(s-wv[i])*(1-Math.exp(-dt*24));
+  }
+}
+function vg(x0,y0,x1,y1){
+  const g=ctx.createLinearGradient(x0,y0,x1,y1),c=S.vzCol;
+  if(c==='white'){g.addColorStop(0,'#ffffff');g.addColorStop(1,'#dfe7fb')}
+  else if(c==='gold'){g.addColorStop(0,'#ffe08a');g.addColorStop(.5,'#f2b84b');g.addColorStop(1,'#c98a1f')}
+  else{g.addColorStop(0,'#ffd877');g.addColorStop(.5,'#ffffff');g.addColorStop(1,'#ffd877')}
+  return g;
+}
+function glow(p,th){const a=ctx.globalAlpha;ctx.globalAlpha=a*.2;ctx.lineWidth=th*4;ctx.stroke(p);ctx.globalAlpha=a;ctx.lineWidth=th;ctx.stroke(p)}
+function star(cx,cy,r,rot,lw){const p=new Path2D();for(let k=0;k<2;k++)for(let i=0;i<=4;i++){const a=rot+k*Math.PI/4+i*Math.PI/2,x=cx+Math.cos(a)*r,y=cy+Math.sin(a)*r;i?p.lineTo(x,y):p.moveTo(x,y)}ctx.lineWidth=lw;ctx.stroke(p)}
+function vzCirc(cx,cy,t){
+  const R=150*S.vzSize,hh=S.vzH,rot=t*.06*S.aspd,pu=1+S.pulse*.05*S.preact,N=Math.round(160*S.perfK+20);
+  ctx.strokeStyle=vg(cx-R*1.6,cy-R*1.6,cx+R*1.6,cy+R*1.6);
+  const ring=new Path2D();
+  for(let i=0;i<=N;i++){const a=i/N*6.2832+rot,u=Math.abs(i/N*2-1),r=(R+wv[Math.round(u*(NW-1))]*70*hh)*pu,x=cx+Math.cos(a)*r,y=cy+Math.sin(a)*r;i?ring.lineTo(x,y):ring.moveTo(x,y)}
+  ring.closePath();glow(ring,S.vzTh);
+  const tk=new Path2D(),M2=NB*2;
+  for(let i=0;i<M2;i++){const k=i<NB?i:M2-1-i,a=i/M2*6.2832-rot*1.5,r0=R+24*S.vzSize,r1=r0+5+vb[k]*100*hh;tk.moveTo(cx+Math.cos(a)*r0,cy+Math.sin(a)*r0);tk.lineTo(cx+Math.cos(a)*r1,cy+Math.sin(a)*r1)}
+  ctx.lineWidth=Math.max(1,S.vzTh*.8);ctx.stroke(tk);
+  if(S.vzOrn){ctx.globalAlpha*=.6;star(cx,cy,R*.7,rot*3,Math.max(1,S.vzTh*.5));star(cx,cy,R*.42,-rot*4,1)}
+}
+function vzHoriz(cx,by){
+  const Wd=W*.7*S.vzSize,hh=S.vzH;ctx.strokeStyle=vg(cx-Wd/2,0,cx+Wd/2,0);
+  for(const sg of[1,-1]){
+    ctx.save();if(sg<0)ctx.globalAlpha*=.3;
+    const p=new Path2D();
+    for(let i=0;i<NW;i++){const x=cx-Wd/2+i/(NW-1)*Wd,y=by+sg*wv[i]*130*hh*Math.sin(Math.PI*i/(NW-1));i?p.lineTo(x,y):p.moveTo(x,y)}
+    glow(p,S.vzTh);ctx.restore();
+  }
+  ctx.save();ctx.globalAlpha*=.25;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(cx-Wd/2,by);ctx.lineTo(cx+Wd/2,by);ctx.stroke();ctx.restore();
+}
+function vzBars(cx,by){
+  const Wd=W*.7*S.vzSize,st=Wd/NB,bw=Math.max(1.5,st*clamp(.12+S.vzTh*.07,.2,.9)),hh=S.vzH;
+  ctx.lineCap='round';ctx.lineWidth=bw;ctx.strokeStyle=vg(0,by-260*hh,0,by);
+  const p=new Path2D(),r=new Path2D(),d=new Path2D();
+  for(let i=0;i<NB;i++){const x=cx-Wd/2+(i+.5)*st,h=3+vb[i]*250*hh,py=by-(3+pk[i]*250*hh)-8;p.moveTo(x,by);p.lineTo(x,by-h);r.moveTo(x,by+4);r.lineTo(x,by+4+h*.3);d.moveTo(x+.01,py);d.lineTo(x,py)}
+  const a=ctx.globalAlpha;ctx.stroke(p);ctx.globalAlpha=a*.25;ctx.stroke(r);ctx.globalAlpha=a*.9;ctx.lineWidth=bw*.8;ctx.stroke(d);
+}
+function vzWave(cx,by,t){
+  const Wd=W*.8*S.vzSize,hh=S.vzH,n=28,sp=S.aspd,a00=ctx.globalAlpha;
+  for(let L=0;L<3;L++)for(const sg of[1,-1]){
+    ctx.save();
+    const pts=[];
+    for(let i=0;i<=n;i++){const u=i/n,v=Math.abs(1-2*u),bi=Math.min(NB-1,Math.floor(Math.pow(v,1.3)*NB*.75)),tp=Math.pow(Math.sin(Math.PI*u),.8),a=(vb[bi]*150*(1-L*.25)+4)*hh*(.7+.3*Math.sin(t*sp*1.3+i*.5+L*2.1));pts.push([cx-Wd/2+u*Wd,by-sg*a*tp])}
+    const p=new Path2D();p.moveTo(pts[0][0],pts[0][1]);
+    for(let i=1;i<n;i++)p.quadraticCurveTo(pts[i][0],pts[i][1],(pts[i][0]+pts[i+1][0])/2,(pts[i][1]+pts[i+1][1])/2);
+    p.lineTo(pts[n][0],pts[n][1]);
+    const f=new Path2D(p);f.lineTo(cx+Wd/2,by);f.lineTo(cx-Wd/2,by);f.closePath();
+    const a0=a00*(sg>0?1:.35)*(1-L*.28);
+    ctx.globalAlpha=a0*.14;ctx.fillStyle=vg(0,by-160*hh,0,by);ctx.fill(f);
+    ctx.globalAlpha=a0;ctx.strokeStyle=vg(cx-Wd/2,0,cx+Wd/2,0);glow(p,S.vzTh*(1-L*.2));
+    ctx.restore();
+  }
+}
+function drawViz(t){
+  if(!S.vzOn)return;
+  const st=S.vzStyle,cx=640+S.vzX,by=(st==='circ'?330:560)+S.vzY;
+  ctx.save();ctx.globalAlpha=S.vzOp;ctx.lineCap='round';ctx.lineJoin='round';
+  if(st==='circ')vzCirc(cx,by,t);else if(st==='horiz')vzHoriz(cx,by);else if(st==='bars')vzBars(cx,by);else vzWave(cx,by,t);
+  ctx.restore();
+}
+function layersBack(t,dt){vzUpdate(t,dt);partUpdate(t,dt);drawParts(t,0);if(!(S.full&&S.vzOver))drawViz(t)}
+function layersFront(t){if(S.full&&S.vzOver)drawViz(t);drawParts(t,1)}
+buildBg();
+</script>
+</body>
+</html>

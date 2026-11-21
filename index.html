@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>KAMANJAMIX VIDEO STUDIO</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<main>
+<h1><b>KAMANJAMIX</b> VIDEO STUDIO</h1>
+<p class="sub">النسخة الأولى: ارفع صورة المغنية وملف MP3، ثم شغّل المسرح. كل شيء يعمل داخل المتصفح فقط.</p>
+
+<div class="stage"><canvas id="stage"></canvas><div class="hint" id="hint">اضغط «العرض التجريبي» أو ارفع ملف MP3 للبدء</div></div>
+
+<div class="bar">
+  <button class="main" id="play">تشغيل</button>
+  <div class="seek"><span id="cur">0:00</span><input type="range" id="seek" min="0" max="1" step="0.01" value="0" style="flex:1;accent-color:var(--ac)"><span id="dur">0:00</span></div>
+  <div class="meters" id="meters" title="باس / متوسط / حاد"><i></i><i></i><i></i></div>
+  <label class="row" style="margin:0"><span>الصوت</span><input type="range" id="vol" min="0" max="1" step="0.01" value="0.9" style="width:90px;accent-color:var(--ac)"></label>
+</div>
+
+<div class="grid">
+  <section class="card">
+    <h2>الملفات</h2>
+    <div class="btns">
+      <label class="btn">رفع صورة المغنية<input type="file" id="img" accept="image/*"></label>
+      <label class="btn">رفع ملف MP3<input type="file" id="mp3" accept="audio/*,.mp3"></label>
+      <button id="demo">العرض التجريبي</button>
+    </div>
+    <small id="trk">لا يوجد ملف صوتي بعد.</small>
+    <div class="row" style="margin-top:12px"><label>الاسم على الشاشة</label><input type="text" id="name" placeholder="اسم المغنية" maxlength="40"></div>
+  </section>
+
+  <section class="card">
+    <h2>الصورة</h2>
+    <div class="chk"><input type="checkbox" id="key"><label for="key">إزالة الخلفية (حسب لون الحواف)</label></div>
+    <div class="row"><label>الحساسية</label><input type="range" data-k="tol" data-p="1" min="10" max="160" step="1" value="60"></div>
+    <div class="row"><label>نعومة الحواف</label><input type="range" data-k="feather" data-p="1" min="0" max="100" step="1" value="45"></div>
+    <div class="row"><label>الحجم</label><input type="range" data-k="scale" min="0.6" max="1.4" step="0.01" value="1"></div>
+    <div class="row"><label>الارتفاع</label><input type="range" data-k="yoff" min="-60" max="60" step="1" value="0"></div>
+  </section>
+
+  <section class="card">
+    <h2>الكاميرا</h2>
+    <div class="btns" id="cams"></div>
+    <div class="row" style="margin-top:12px"><label>القوة</label><input type="range" data-k="camAmt" min="0" max="1.5" step="0.05" value="1"></div>
+    <div class="chk"><input type="checkbox" id="bars" checked><label for="bars">شريط سينمائي أسود</label></div>
+  </section>
+
+  <section class="card">
+    <h2>الإضاءة</h2>
+    <div class="btns" id="themes"></div>
+    <div class="row" style="margin-top:12px"><label>الشدة</label><input type="range" data-k="light" min="0.2" max="2" step="0.05" value="1"></div>
+    <div class="chk"><input type="checkbox" id="strobe" checked><label for="strobe">وميض مع الإيقاع</label></div>
+    <div class="chk"><input type="checkbox" id="haze" checked><label for="haze">ضباب المسرح</label></div>
+  </section>
+
+  <section class="card">
+    <h2>تسجيل المقطع</h2>
+    <button id="rec">بدء التسجيل</button>
+    <small id="recs">يسجّل المسرح والصوت معاً بصيغة WebM.</small>
+    <video id="pv" controls playsinline></video>
+    <a id="dl" class="btn" style="display:none;margin-top:8px" download="kamanjamix-clip.webm">تحميل المقطع</a>
+  </section>
+
+  <section class="card">
+    <h2>حركة المغنية</h2>
+    <div class="chk"><input type="checkbox" id="perf" checked><label for="perf">وضع الأداء الغنائي</label></div>
+    <div class="chk"><input type="checkbox" id="mouthOn" checked><label for="mouthOn">فتح الفم التقريبي (ليس مزامنة شفاه)</label></div>
+    <div class="row"><label>السرعة</label><input type="range" data-k="mspeed" min="0.3" max="2" step="0.05" value="1"></div>
+    <div class="row"><label>القوة</label><input type="range" data-k="mamp" min="0" max="2" step="0.05" value="1"></div>
+    <div class="row"><label>حركة الرأس</label><input type="range" data-k="head" min="0" max="2" step="0.05" value="1"></div>
+    <div class="row"><label>فتح الفم</label><input type="range" data-k="mouthAmp" min="0" max="2" step="0.05" value="1"></div>
+    <div class="row"><label>عرض الفم</label><input type="range" data-k="mouthW" min="0.015" max="0.08" step="0.001" value="0.03"></div>
+    <div class="row"><label>العمق 2.5D</label><input type="range" data-k="depth" min="0" max="2" step="0.05" value="1"></div>
+    <div class="btns"><button class="on" data-cal="mouth">حدّد الفم</button><button data-cal="neck">حدّد الرقبة</button></div>
+    <canvas id="cal" title="اضغط على الصورة لوضع النقطة"></canvas>
+    <small>للحصول على حركة نظيفة، اضغط على فم المغنية ثم على رقبتها. الرأس يتحرك كقطعة صلبة حول الرقبة فلا تتشوه الملامح. العمق مقدَّر بنموذج هندسي بسيط، وليس خريطة عمق حقيقية. الحركة الحقيقية للوجه ومزامنة الشفاه تحتاجان نموذج ذكاء اصطناعي محلياً وهو غير متوفر هنا.</small>
+  </section>
+
+  <section class="card" style="grid-column:1/-1">
+    <h2>PREMIUM PARTICLES &amp; AUDIO VISUALIZER</h2>
+    <div class="hm">
+      <div>
+        <b>Particles — الجزيئات</b>
+        <div class="chk"><input type="checkbox" id="pOn" checked><label for="pOn">Enable Particles</label></div>
+        <div class="row"><label>Preset</label><select id="ppre"><option value="">مخصص</option><option value="royal">Royal Gold</option><option value="snow">White Sparkle</option><option value="ember">Warm Embers</option><option value="dust">Silver Dust</option></select></div>
+        <div class="row"><label>Color</label><select id="pPal"><option value="gold">Gold</option><option value="white">White</option><option value="silver">Silver</option><option value="warm">Warm Glow</option></select></div>
+        <div class="row"><label>Particle Density</label><input type="range" data-k="pdens" min="0" max="300" step="5" value="130"></div>
+        <div class="row"><label>Particle Size</label><input type="range" data-k="psize" min="0.3" max="3" step="0.05" value="1.1"></div>
+        <div class="row"><label>Particle Speed</label><input type="range" data-k="pspd" min="0.2" max="3" step="0.05" value="0.8"></div>
+        <div class="row"><label>Opacity</label><input type="range" data-k="pop" min="0" max="1" step="0.05" value="0.85"></div>
+        <div class="row"><label>Beat Reactivity</label><input type="range" data-k="preact" min="0" max="2" step="0.05" value="1"></div>
+      </div>
+      <div>
+        <b>Audio Waves — الموجات الصوتية</b>
+        <div class="chk"><input type="checkbox" id="vzOn" checked><label for="vzOn">Enable Audio Waves</label></div>
+        <div class="row"><label>Waveform Style</label><select id="vzStyle"><option value="wave">Smooth Audio Waves</option><option value="circ">Circular Waveform</option><option value="horiz">Horizontal Waveform</option><option value="bars">Spectrum Bars</option></select></div>
+        <div class="row"><label>Color</label><select id="vzCol"><option value="goldwhite">Gold + White</option><option value="gold">Gold</option><option value="white">White</option></select></div>
+        <div class="row"><label>Size</label><input type="range" data-k="vzSize" min="0.4" max="1.8" step="0.05" value="1"></div>
+        <div class="row"><label>Height</label><input type="range" data-k="vzH" min="0.2" max="2.5" step="0.05" value="1"></div>
+        <div class="row"><label>Thickness</label><input type="range" data-k="vzTh" min="1" max="10" step="0.5" value="3"></div>
+        <div class="row"><label>Opacity</label><input type="range" data-k="vzOp" min="0.1" max="1" step="0.05" value="0.85"></div>
+        <div class="row"><label>Position X</label><input type="range" data-k="vzX" min="-500" max="500" step="5" value="0"></div>
+        <div class="row"><label>Position Y</label><input type="range" data-k="vzY" min="-250" max="250" step="5" value="0"></div>
+        <div class="row"><label>Animation Speed</label><input type="range" data-k="aspd" min="0.2" max="3" step="0.05" value="1"></div>
+        <div class="chk"><input type="checkbox" id="vzOrn" checked><label for="vzOrn">زخرفة مغربية (نجمة ثمانية) مع الشكل الدائري</label></div>
+      </div>
+      <div>
+        <b>Display &amp; Export — العرض والتصدير</b>
+        <div class="chk"><input type="checkbox" id="full" checked><label for="full">Full Image Display (Contain): صورة كاملة بدون قص</label></div>
+        <div class="chk"><input type="checkbox" id="vzOver" checked><label for="vzOver">الموجات فوق الصورة في وضع الصورة الكاملة</label></div>
+        <div class="row"><label>Background Blur</label><input type="range" data-k="bgBlur" min="0" max="100" step="1" value="55"></div>
+        <div class="btns"><button id="vzprev">Preview</button><button id="vzexp" class="main">Export Video</button></div>
+        <small id="vzst">Preview يشغّل إيقاعاً تجريبياً إن لم تكن هناك أغنية. Export Video يسجّل الأغنية من بدايتها حتى نهايتها بالوقت الحقيقي (أو 20 ثانية من العرض التجريبي)، والمؤثرات تُرسم على نفس القماش المُسجَّل، فتظهر في الفيديو النهائي. في وضع الصورة الكاملة تُقيّد الكاميرا لمنع القص، وتُعطَّل إزالة الخلفية ونعومة الحواف لتبقى الصورة الأصلية كما هي. الجزيئات لا تغطي المغنية.</small>
+      </div>
+    </div>
+  </section>
+
+  <section class="card" style="grid-column:1/-1">
+    <h2>AI Singer Head &amp; Mouth Motion</h2>
+    <div class="chk"><input type="checkbox" id="hon" checked><label for="hon">Enable Motion: تفعيل حركة الرأس والفم</label></div>
+    <div class="hm">
+      <div>
+        <div id="hmSlot"></div>
+        <div class="row"><label>Zoom</label><input type="range" id="calz" min="1" max="5" step="0.1" value="1"></div>
+        <div class="btns"><button id="hreset">Reset Points</button><button id="hauto">كشف تلقائي (إن توفر)</button></div>
+        <small id="hmst"></small>
+      </div>
+      <div>
+        <div class="btns"><button id="hvbtn">Preview</button></div>
+        <canvas id="hv" width="260" height="260" style="display:none"></canvas>
+        <div class="row"><label>Head Rotation °</label><input type="range" data-k="hrot" min="0" max="8" step="0.1" value="2.5"></div>
+        <div class="row"><label>Mouth Motion</label><input type="range" data-k="mmot" min="0" max="2" step="0.05" value="1"></div>
+        <div class="row"><label>Motion Speed</label><input type="range" data-k="hspd" min="0.3" max="2" step="0.05" value="1"></div>
+        <div class="row"><label>Motion Intensity</label><input type="range" data-k="hint" min="0" max="2" step="0.05" value="1"></div>
+        <small>الرأس يدور كقطعة صلبة حول الرقبة (تحويل 2D)، والفم محاكاة هندسية: تمديد موضعي صغير وتجويف داخلي يتبع صوت الأغنية، وليس مزامنة شفاه حقيقية. لا تُولَّد شخصية جديدة: الصورة المرفوعة هي المرجع الوحيد. المعاينة تحاكي موجة غناء تجريبية إن لم يكن هناك صوت. لربط نموذج ذكاء اصطناعي محلي لاحقاً، عرّف window.KMX_FACE_PROVIDER.detect(canvas) ليعيد {mouth:{x,y}, neck:{x,y}} بإحداثيات من 0 إلى 1.</small>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>كاميرا متقدمة</h2>
+    <div class="row"><label>السرعة</label><input type="range" data-k="camSpeed" min="0.3" max="2" step="0.05" value="1"></div>
+    <div class="row"><label>الانتقال</label><select id="trans"><option value="auto">مزيج تلقائي</option><option value="ease">انسيابي</option><option value="whip">سريع (Whip)</option><option value="cut">قطع مباشر</option></select></div>
+    <div class="chk"><input type="checkbox" id="dof" checked><label for="dof">عمق الميدان (تمويه الخلفية في اللقطات القريبة)</label></div>
+  </section>
+
+  <section class="card">
+    <h2>الجمهور والمؤثرات</h2>
+    <div class="row"><label>حماس الجمهور</label><input type="range" data-k="crowd" min="0" max="2" step="0.05" value="1"></div>
+    <div class="row"><label>المؤثرات</label><input type="range" data-k="fx" min="0" max="2" step="0.05" value="1"></div>
+    <div class="row"><label>جودة الإخراج</label><select id="q"><option value="1">720p</option><option value="1.5">1080p</option></select></div>
+  </section>
+</div>
+</main>
+
+<script src="js/01-engine-audio-stage.js"></script>
+<script src="js/02-motion-camera-webgl.js"></script>
+<script src="js/03-head-mouth-panel.js"></script>
+<script src="js/04-particles-visualizer.js"></script>
+</body>
+</html>

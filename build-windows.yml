@@ -1,0 +1,52 @@
+name: Build Windows EXE
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main, master ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Get the project
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js (build machine only)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install build tools
+        run: npm install --no-audit --no-fund
+
+      - name: Build the installer
+        run: npm run dist
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+
+      - name: Upload the installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: KAMANJAMIX-VIDEO-STUDIO-SETUP
+          path: dist/*.exe
+          if-no-files-found: error
+
+      - name: Self-test the built app
+        shell: pwsh
+        run: |
+          $exe = Join-Path $PWD 'dist/win-unpacked/KAMANJAMIX VIDEO STUDIO.exe'
+          if (-not (Test-Path $exe)) { throw "Built app not found: $exe" }
+          $out = Join-Path $PWD 'dist/smoke-test-result.json'
+          $p = Start-Process -FilePath $exe -ArgumentList "--smoke-test=$out" -PassThru -Wait
+          if (Test-Path $out) { Get-Content $out }
+          if ($p.ExitCode -ne 0) { throw "Self-test FAILED, exit code $($p.ExitCode). See smoke-test-result.json" }
+          Write-Host "Self-test PASSED"
+
+      - name: Upload self-test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: self-test-report
+          path: dist/smoke-test-result.json
+          if-no-files-found: ignore

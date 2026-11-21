@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2b1255"/><stop offset="1" stop-color="#0a0712"/></linearGradient>
+    <radialGradient id="g1" cx="0.22" cy="0.18" r="0.7"><stop offset="0" stop-color="#ff3fb4" stop-opacity="0.45"/><stop offset="1" stop-color="#ff3fb4" stop-opacity="0"/></radialGradient>
+    <radialGradient id="g2" cx="0.85" cy="0.9" r="0.7"><stop offset="0" stop-color="#35d4ff" stop-opacity="0.38"/><stop offset="1" stop-color="#35d4ff" stop-opacity="0"/></radialGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffe9a8"/><stop offset="0.5" stop-color="#f2b84b"/><stop offset="1" stop-color="#c98a1f"/></linearGradient>
+    <linearGradient id="kg" gradientUnits="userSpaceOnUse" x1="330" y1="280" x2="700" y2="720"><stop offset="0" stop-color="#ff3fb4"/><stop offset="1" stop-color="#35d4ff"/></linearGradient>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="14" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <rect x="24" y="24" width="976" height="976" rx="224" fill="url(#bg)"/>
+  <rect x="24" y="24" width="976" height="976" rx="224" fill="url(#g1)"/>
+  <rect x="24" y="24" width="976" height="976" rx="224" fill="url(#g2)"/>
+  <rect x="24" y="24" width="976" height="976" rx="224" fill="none" stroke="url(#gold)" stroke-width="10" opacity="0.55"/>
+  <g fill="none" stroke="url(#gold)" stroke-linejoin="miter" opacity="0.85">
+    <g transform="translate(512 470)" stroke-width="14">
+      <rect x="-290" y="-290" width="580" height="580"/>
+      <rect x="-290" y="-290" width="580" height="580" transform="rotate(45)"/>
+    </g>
+    <g transform="translate(512 470)" stroke-width="7" opacity="0.5">
+      <rect x="-190" y="-190" width="380" height="380"/>
+      <rect x="-190" y="-190" width="380" height="380" transform="rotate(45)"/>
+    </g>
+  </g>
+  <g fill="none" stroke="url(#kg)" stroke-width="96" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)">
+    <path d="M388 296 L388 644"/>
+    <path d="M404 482 L636 296"/>
+    <path d="M470 440 L650 646"/>
+  </g>
+  <g fill="url(#gold)">
+    <rect x="262" y="796" width="34" height="70" rx="17"/>
+    <rect x="322" y="770" width="34" height="122" rx="17"/>
+    <rect x="382" y="748" width="34" height="166" rx="17"/>
+    <rect x="442" y="780" width="34" height="102" rx="17"/>
+    <rect x="502" y="738" width="34" height="186" rx="17"/>
+    <rect x="562" y="772" width="34" height="118" rx="17"/>
+    <rect x="622" y="752" width="34" height="158" rx="17"/>
+    <rect x="682" y="786" width="34" height="90" rx="17"/>
+    <rect x="742" y="802" width="34" height="58" rx="17"/>
+  </g>
+</svg>
