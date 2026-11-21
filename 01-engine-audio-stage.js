@@ -248,4 +248,4 @@ function frame(now){
   [S.bass,S.mid,S.treb].forEach((v,i)=>mt[i].style.height=Math.max(3,Math.min(30,v*34))+'px');
   requestAnimationFrame(frame);
 }
-requestAnimationFrame(frame);
+window.addEventListener('load',()=>{last=performance.now();requestAnimationFrame(frame)});
